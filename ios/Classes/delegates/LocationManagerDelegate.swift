@@ -1,0 +1,151 @@
+import CoreLocation
+import Flutter
+import OSLog
+
+// Singleton class
+class LocationManagerDelegate: NSObject, CLLocationManagerDelegate {
+    // Prevent multiple instances of CLLocationManager to avoid duplicate triggers.
+    private static var sharedLocationManager: CLLocationManager?
+    
+    private let log = Logger(subsystem: Constants.PACKAGE_NAME, category: "LocationManagerDelegate")
+    
+    private let flutterPluginRegistrantCallback: FlutterPluginRegistrantCallback?
+    let locationManager: CLLocationManager
+    
+    private var headlessFlutterEngine: FlutterEngine? = nil
+    private var beaconBackgroundApi: BeaconFenceBackgroundApiImpl? = nil
+    
+    init(flutterPluginRegistrantCallback: FlutterPluginRegistrantCallback?) {
+        self.flutterPluginRegistrantCallback = flutterPluginRegistrantCallback
+        locationManager = LocationManagerDelegate.sharedLocationManager ?? CLLocationManager()
+        LocationManagerDelegate.sharedLocationManager = locationManager
+        
+        super.init()
+        locationManager.delegate = self
+        
+        log.debug("LocationManagerDelegate created with instance ID=\(Int.random(in: 1 ... 1000000)).")
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
+        // Check if this is a beacon region
+        if region is CLBeaconRegion {
+            handleBeaconRegionStateChange(state: state, region: region)
+        }
+    }
+    
+    private func handleBeaconRegionStateChange(state: CLRegionState, region: CLRegion) {
+        log.debug("didDetermineState: \(String(describing: state)) for beacon ID: \(region.identifier)")
+        
+        guard let beaconRegion = region as? CLBeaconRegion else { return }
+        
+        if state == .inside {
+            // Start ranging to get RSSI
+            if #available(iOS 13.0, *) {
+                locationManager.startRangingBeacons(satisfying: beaconRegion.beaconIdentityConstraint)
+            } else {
+                locationManager.startRangingBeacons(in: beaconRegion)
+            }
+        } else if state == .outside {
+            // Stop ranging and send exit event
+            if #available(iOS 13.0, *) {
+                locationManager.stopRangingBeacons(satisfying: beaconRegion.beaconIdentityConstraint)
+            } else {
+                locationManager.stopRangingBeacons(in: beaconRegion)
+            }
+            sendBeaconEvent(region: region, event: .exit, rssi: nil)
+        }
+    }
+    
+    // MARK: - Ranging Delegate
+    
+    // iOS 13+
+    func locationManager(_ manager: CLLocationManager, didRange beacons: [CLBeacon], satisfying beaconConstraint: CLBeaconIdentityConstraint) {
+        handleRangedBeacons(beacons, constraint: beaconConstraint)
+    }
+    
+    // iOS < 13
+    func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
+         if let beacon = beacons.first {
+             sendBeaconEvent(region: region, event: .enter, rssi: beacon.rssi)
+             manager.stopRangingBeacons(in: region)
+         }
+    }
+    
+    private func handleRangedBeacons(_ beacons: [CLBeacon], constraint: CLBeaconIdentityConstraint) {
+        guard let beacon = beacons.first else { return }
+        
+        // Find the region that matches this constraint
+        for region in locationManager.monitoredRegions {
+            guard let beaconRegion = region as? CLBeaconRegion else { continue }
+            if beaconRegion.beaconIdentityConstraint == constraint {
+                sendBeaconEvent(region: beaconRegion, event: .enter, rssi: beacon.rssi)
+                locationManager.stopRangingBeacons(satisfying: constraint)
+                return
+            }
+        }
+    }
+
+    private func sendBeaconEvent(region: CLRegion, event: BeaconEvent, rssi: Int? = nil) {
+        guard let activeBeacon = ActiveBeaconWires.fromRegion(region, rssi: rssi) else {
+            log.error("Unknown CLRegion type: \(String(describing: type(of: region)))")
+            return
+        }
+
+        if !activeBeacon.triggers.contains(event) {
+            return
+        }
+        
+        guard let callbackHandle = FlutterBeaconFencePersistence.getRegionCallbackHandle(id: activeBeacon.id) else {
+            log.error("Callback handle for beacon \(activeBeacon.id) not found.")
+            return
+        }
+        
+        let params = BeaconCallbackParamsWire(beacons: [activeBeacon], event: event, callbackHandle: callbackHandle)
+        
+        guard let backgroundApi = beaconBackgroundApi ?? createFlutterEngine() else {
+            return
+        }
+        
+        // Shutdown the engine once the event is handled
+        func cleanup() {
+            beaconBackgroundApi = nil
+            headlessFlutterEngine?.destroyContext()
+            headlessFlutterEngine = nil
+            log.debug("Flutter engine cleanup complete.")
+        }
+        
+        beaconBackgroundApi!.beaconTriggered(params: params, cleanup: cleanup)
+        log.debug("Beacon trigger event sent with RSSI: \(rssi ?? 0).")
+    }
+    
+    func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: any Error) {
+        log.error("monitoringDidFailFor: \(region?.identifier ?? "nil") withError: \(error)")
+    }
+    
+    private func createFlutterEngine() -> BeaconFenceBackgroundApiImpl? {
+        // Create a Flutter engine
+        headlessFlutterEngine = FlutterEngine(name: Constants.HEADLESS_FLUTTER_ENGINE_NAME, project: nil, allowHeadlessExecution: true)
+        log.debug("A new headless Flutter engine has been created.")
+        
+        guard let callbackDispatcherHandle = FlutterBeaconFencePersistence.getCallbackDispatcherHandle() else {
+            log.error("Callback dispatcher not found in UserDefaults.")
+            return nil
+        }
+        
+        guard let callbackDispatcherInfo = FlutterCallbackCache.lookupCallbackInformation(callbackDispatcherHandle) else {
+            log.error("Callback dispatcher not found.")
+            return nil
+        }
+        
+        // Start the engine at the specified callback method.
+        headlessFlutterEngine!.run(withEntrypoint: callbackDispatcherInfo.callbackName, libraryURI: callbackDispatcherInfo.callbackLibraryPath)
+        flutterPluginRegistrantCallback?(headlessFlutterEngine!)
+        log.debug("Flutter engine started and plugins registered.")
+        
+        beaconBackgroundApi = BeaconFenceBackgroundApiImpl(binaryMessenger: headlessFlutterEngine!.binaryMessenger)
+        FlutterBeaconFenceBackgroundApiSetup.setUp(binaryMessenger: headlessFlutterEngine!.binaryMessenger, api: beaconBackgroundApi)
+        log.debug("BeaconFenceBackgroundApiinitialized.")
+
+        return beaconBackgroundApi
+    }
+}
