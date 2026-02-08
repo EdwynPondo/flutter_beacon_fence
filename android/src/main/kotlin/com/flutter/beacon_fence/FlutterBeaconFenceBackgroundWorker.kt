@@ -1,21 +1,16 @@
 package com.flutter.beacon_fence
 
 import android.content.Context
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.concurrent.futures.CallbackToFutureAdapter
-import androidx.work.ForegroundInfo
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.flutter.beacon_fence.api.BeaconFenceBackgroundApiImpl
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceBackgroundApi
-import com.flutter.beacon_fence.generated.NativeBeaconBackgroundApi
-import com.flutter.beacon_fence.generated.NativeBeaconTriggerApi
+import com.flutter.beacon_fence.generated.FlutterBeaconFenceTriggerApi
 import com.flutter.beacon_fence.model.BeaconCallbackParamsStorage
-import com.flutter.beacon_fence.util.Notifications
-import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
@@ -30,8 +25,6 @@ class FlutterBeaconFenceBackgroundWorker(
     ListenableWorker(context, workerParams) {
     companion object {
         const val TAG = "FlutterBeaconFenceBackgroundWorker"
-        // TODO: Consider using random ID.
-        private const val NOTIFICATION_ID = 493620
         private val flutterLoader = FlutterInjector.instance().flutterLoader()
     }
 
@@ -48,15 +41,6 @@ class FlutterBeaconFenceBackgroundWorker(
         }
 
     private var backgroundApiImpl: BeaconFenceBackgroundApiImpl? = null
-
-    override fun getForegroundInfoAsync(): ListenableFuture<ForegroundInfo> {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // This method does not need to be implemented for Android 31 (S) and above.
-            return super.getForegroundInfoAsync()
-        }
-        val notification = Notifications.createBackgroundWorkerNotification(context)
-        return Futures.immediateFuture(ForegroundInfo(NOTIFICATION_ID, notification))
-    }
 
     override fun startWork(): ListenableFuture<Result> {
         startTime = System.currentTimeMillis()
@@ -133,9 +117,9 @@ class FlutterBeaconFenceBackgroundWorker(
 
         try {
             val beaconParams = Json.decodeFromString<BeaconCallbackParamsStorage>(jsonData).toWire()
-            val nativeBeaconTriggerApi = NativeBeaconTriggerApi(lEngine.dartExecutor.binaryMessenger)
+            val flutterBeaconTriggerApi = FlutterBeaconFenceTriggerApi(lEngine.dartExecutor.binaryMessenger)
             Log.d(TAG, "Triggering beacon callback.")
-            nativeBeaconTriggerApi.beaconTriggered(beaconParams) {
+            flutterBeaconTriggerApi.beaconTriggered(beaconParams) {
                 stopEngine(Result.success())
             }
             return

@@ -13,6 +13,7 @@ import com.flutter.beacon_fence.generated.BeaconWire
 import com.flutter.beacon_fence.generated.FlutterError
 import com.flutter.beacon_fence.util.ActiveBeaconWires
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
+import com.flutter.beacon_fence.util.Notifications
 import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.Region
 import org.altbeacon.beacon.Identifier
@@ -32,11 +33,7 @@ class BeaconFenceApiImpl(
     override fun initialize(callbackDispatcherHandle: Long) {
         context.getSharedPreferences(Constants.SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
             .edit {
-                putLong(Constants.CALLBACK_DISPATCHER_HANDLE_KEY, callbackDispatcherHandle)
-                    .putLong(
-                        Constants.BEACON_CALLBACK_DISPATCHER_HANDLE_KEY,
-                        callbackDispatcherHandle
-                    )
+                putLong(Constants.BEACON_CALLBACK_DISPATCHER_HANDLE_KEY, callbackDispatcherHandle)
             }
         
         Log.d(TAG, "Initialized consolidated BeaconFenceApi.")
@@ -124,9 +121,19 @@ class BeaconFenceApiImpl(
                 // but setting the fields should be enough for next scan cycle.
             }
             
+            
+            if (settings.useForegroundService && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val notification = Notifications.createForegroundServiceNotification(context)
+                // Using a unique ID for AltBeacon's foreground service
+                beaconManager.enableForegroundServiceScanning(notification, 938131)
+            } else {
+                beaconManager.disableForegroundServiceScanning()
+            }
+            
             Log.d(TAG, "Configured Android scan periods: " +
                     "Foreground(Scan=${settings.foregroundScanPeriodMillis}ms, Between=${settings.foregroundBetweenScanPeriodMillis}ms), " +
-                    "Background(Scan=${settings.backgroundScanPeriodMillis}ms, Between=${settings.backgroundBetweenScanPeriodMillis}ms)")
+                    "Background(Scan=${settings.backgroundScanPeriodMillis}ms, Between=${settings.backgroundBetweenScanPeriodMillis}ms), " +
+                    "UseForegroundService=${settings.useForegroundService}")
             
             NativeBeaconPersistence.saveScannerSettings(context, settings)
             

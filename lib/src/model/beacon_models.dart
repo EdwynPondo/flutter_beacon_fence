@@ -60,11 +60,16 @@ class AndroidScannerSettings {
   /// The duration to wait between beacon scans when the app is in the background.
   final Duration backgroundBetweenScanPeriod;
 
+  /// Whether to use a foreground service for scanning in the background.
+  /// This ensures reliable scanning on modern Android versions.
+  final bool useForegroundService;
+
   const AndroidScannerSettings({
     this.foregroundScanPeriod = const Duration(milliseconds: 1100),
     this.foregroundBetweenScanPeriod = const Duration(seconds: 0),
     this.backgroundScanPeriod = const Duration(milliseconds: 1100),
     this.backgroundBetweenScanPeriod = const Duration(seconds: 0),
+    this.useForegroundService = false,
   });
 
   @override
@@ -73,7 +78,8 @@ class AndroidScannerSettings {
         'foregroundScanPeriod: ${foregroundScanPeriod.inMilliseconds}ms, '
         'foregroundBetweenScanPeriod: ${foregroundBetweenScanPeriod.inMilliseconds}ms, '
         'backgroundScanPeriod: ${backgroundScanPeriod.inMilliseconds}ms, '
-        'backgroundBetweenScanPeriod: ${backgroundBetweenScanPeriod.inMilliseconds}ms)';
+        'backgroundBetweenScanPeriod: ${backgroundBetweenScanPeriod.inMilliseconds}ms, '
+        'useForegroundService: $useForegroundService)';
   }
 }
 

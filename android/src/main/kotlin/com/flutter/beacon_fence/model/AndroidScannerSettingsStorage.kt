@@ -8,7 +8,8 @@ class AndroidScannerSettingsStorage(
     private val foregroundScanPeriodMillis: Long,
     private val foregroundBetweenScanPeriodMillis: Long,
     private val backgroundScanPeriodMillis: Long,
-    private val backgroundBetweenScanPeriodMillis: Long
+    private val backgroundBetweenScanPeriodMillis: Long,
+    private val useForegroundService: Boolean
 ) {
     companion object {
         fun fromWire(e: AndroidScannerSettingsWire): AndroidScannerSettingsStorage {
@@ -16,7 +17,8 @@ class AndroidScannerSettingsStorage(
                 e.foregroundScanPeriodMillis,
                 e.foregroundBetweenScanPeriodMillis,
                 e.backgroundScanPeriodMillis,
-                e.backgroundBetweenScanPeriodMillis
+                e.backgroundBetweenScanPeriodMillis,
+                e.useForegroundService
             )
         }
     }
@@ -26,7 +28,8 @@ class AndroidScannerSettingsStorage(
             foregroundScanPeriodMillis,
             foregroundBetweenScanPeriodMillis,
             backgroundScanPeriodMillis,
-            backgroundBetweenScanPeriodMillis
+            backgroundBetweenScanPeriodMillis,
+            useForegroundService
         )
     }
 }

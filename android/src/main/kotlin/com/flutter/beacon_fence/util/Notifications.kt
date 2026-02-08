@@ -5,17 +5,14 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 
 class Notifications {
     companion object {
-        fun createBackgroundWorkerNotification(context: Context): Notification {
-            // Background Worker notification is only needed for Android 30 and below (30% of users
-            // as of Jan 2025), so we are re-using the Foreground Service notification.
-            return createForegroundServiceNotification(context)
-        }
-
         // TODO: Make notification details customizable by plugin user.
+        @RequiresApi(Build.VERSION_CODES.O)
         fun createForegroundServiceNotification(context: Context): Notification {
             val channelId = "flutter_beacon_fence_plugin_channel"
             val channel = NotificationChannel(
@@ -33,8 +30,8 @@ class Notifications {
                 channel
             )
             return NotificationCompat.Builder(context, channelId)
-                .setContentTitle("Processing beacon event.")
-                .setContentText("We noticed you are near a key location and are checking if we can help.")
+                .setContentTitle("Listening for sessions")
+                .setContentText("We will keep you updated")
                 .setSmallIcon(imageId)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()

@@ -92,6 +92,7 @@ extension AndroidScannerSettingsMapper on AndroidScannerSettings {
       backgroundScanPeriodMillis: backgroundScanPeriod.inMilliseconds,
       backgroundBetweenScanPeriodMillis:
           backgroundBetweenScanPeriod.inMilliseconds,
+      useForegroundService: useForegroundService,
     );
   }
 }

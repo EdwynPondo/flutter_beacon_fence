@@ -225,7 +225,8 @@ data class AndroidScannerSettingsWire (
   val foregroundScanPeriodMillis: Long,
   val foregroundBetweenScanPeriodMillis: Long,
   val backgroundScanPeriodMillis: Long,
-  val backgroundBetweenScanPeriodMillis: Long
+  val backgroundBetweenScanPeriodMillis: Long,
+  val useForegroundService: Boolean
 )
  {
   companion object {
@@ -234,7 +235,8 @@ data class AndroidScannerSettingsWire (
       val foregroundBetweenScanPeriodMillis = pigeonVar_list[1] as Long
       val backgroundScanPeriodMillis = pigeonVar_list[2] as Long
       val backgroundBetweenScanPeriodMillis = pigeonVar_list[3] as Long
-      return AndroidScannerSettingsWire(foregroundScanPeriodMillis, foregroundBetweenScanPeriodMillis, backgroundScanPeriodMillis, backgroundBetweenScanPeriodMillis)
+      val useForegroundService = pigeonVar_list[4] as Boolean
+      return AndroidScannerSettingsWire(foregroundScanPeriodMillis, foregroundBetweenScanPeriodMillis, backgroundScanPeriodMillis, backgroundBetweenScanPeriodMillis, useForegroundService)
     }
   }
   fun toList(): List<Any?> {
@@ -243,6 +245,7 @@ data class AndroidScannerSettingsWire (
       foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
+      useForegroundService,
     )
   }
   override fun equals(other: Any?): Boolean {

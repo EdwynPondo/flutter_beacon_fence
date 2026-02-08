@@ -11,11 +11,7 @@ class Constants {
 
         const val BEACON_CALLBACK_DISPATCHER_HANDLE_KEY = "beacon_callback_dispatch_handler"
 
-        const val ACTION_SHUTDOWN = "SHUTDOWN"
-
         const val WORKER_PAYLOAD_KEY = "$PACKAGE_NAME.worker_payload"
         const val BEACON_CALLBACK_WORK_GROUP = "beacon_callback_work_group"
-
-        const val ISOLATE_HOLDER_WAKE_LOCK_TAG = "$PACKAGE_NAME:wake_lock"
     }
 }

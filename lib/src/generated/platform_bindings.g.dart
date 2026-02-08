@@ -199,6 +199,7 @@ class AndroidScannerSettingsWire {
     required this.foregroundBetweenScanPeriodMillis,
     required this.backgroundScanPeriodMillis,
     required this.backgroundBetweenScanPeriodMillis,
+    required this.useForegroundService,
   });
 
   int foregroundScanPeriodMillis;
@@ -209,12 +210,15 @@ class AndroidScannerSettingsWire {
 
   int backgroundBetweenScanPeriodMillis;
 
+  bool useForegroundService;
+
   List<Object?> _toList() {
     return <Object?>[
       foregroundScanPeriodMillis,
       foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
+      useForegroundService,
     ];
   }
 
@@ -229,6 +233,7 @@ class AndroidScannerSettingsWire {
       foregroundBetweenScanPeriodMillis: result[1]! as int,
       backgroundScanPeriodMillis: result[2]! as int,
       backgroundBetweenScanPeriodMillis: result[3]! as int,
+      useForegroundService: result[4]! as bool,
     );
   }
 

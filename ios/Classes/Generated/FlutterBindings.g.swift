@@ -246,6 +246,7 @@ struct AndroidScannerSettingsWire: Hashable {
   var foregroundBetweenScanPeriodMillis: Int64
   var backgroundScanPeriodMillis: Int64
   var backgroundBetweenScanPeriodMillis: Int64
+  var useForegroundService: Bool
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -254,12 +255,14 @@ struct AndroidScannerSettingsWire: Hashable {
     let foregroundBetweenScanPeriodMillis = pigeonVar_list[1] as! Int64
     let backgroundScanPeriodMillis = pigeonVar_list[2] as! Int64
     let backgroundBetweenScanPeriodMillis = pigeonVar_list[3] as! Int64
+    let useForegroundService = pigeonVar_list[4] as! Bool
 
     return AndroidScannerSettingsWire(
       foregroundScanPeriodMillis: foregroundScanPeriodMillis,
       foregroundBetweenScanPeriodMillis: foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis: backgroundScanPeriodMillis,
-      backgroundBetweenScanPeriodMillis: backgroundBetweenScanPeriodMillis
+      backgroundBetweenScanPeriodMillis: backgroundBetweenScanPeriodMillis,
+      useForegroundService: useForegroundService
     )
   }
   func toList() -> [Any?] {
@@ -268,6 +271,7 @@ struct AndroidScannerSettingsWire: Hashable {
       foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
+      useForegroundService,
     ]
   }
   static func == (lhs: AndroidScannerSettingsWire, rhs: AndroidScannerSettingsWire) -> Bool {

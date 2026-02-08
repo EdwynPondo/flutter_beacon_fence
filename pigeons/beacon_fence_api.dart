@@ -99,12 +99,14 @@ class AndroidScannerSettingsWire {
   final int foregroundBetweenScanPeriodMillis;
   final int backgroundScanPeriodMillis;
   final int backgroundBetweenScanPeriodMillis;
+  final bool useForegroundService;
 
   const AndroidScannerSettingsWire({
     required this.foregroundScanPeriodMillis,
     required this.foregroundBetweenScanPeriodMillis,
     required this.backgroundScanPeriodMillis,
     required this.backgroundBetweenScanPeriodMillis,
+    required this.useForegroundService,
   });
 }
 

@@ -1,11 +1,13 @@
 package com.flutter.beacon_fence
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import com.flutter.beacon_fence.api.BeaconFenceApiImpl
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceApi
 import com.flutter.beacon_fence.util.BeaconNotifier
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
+import com.flutter.beacon_fence.util.Notifications
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.BeaconParser
@@ -20,7 +22,7 @@ class FlutterBeaconFencePlugin : FlutterPlugin {
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         val context = binding.applicationContext
-        
+
         // Initialize BeaconNotifier
         val beaconNotifier = BeaconNotifier(context)
         
@@ -48,18 +50,18 @@ class FlutterBeaconFencePlugin : FlutterPlugin {
                 backgroundBetweenScanPeriod = initialScannerSettings.backgroundBetweenScanPeriodMillis
                 try {
                     updateScanPeriods()
+                    if (initialScannerSettings.useForegroundService && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val notification = Notifications.createForegroundServiceNotification(context)
+                        enableForegroundServiceScanning(notification, 938131)
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed into updateScanPeriods during init: $e")
                 }
                 Log.d(TAG, "Restored Android scan periods from storage.")
             }
         }
-        
         val apiImpl = BeaconFenceApiImpl(context, beaconManager)
-        FlutterBeaconFenceApi.setUp(
-            binding.binaryMessenger,
-            apiImpl
-        )
+        FlutterBeaconFenceApi.setUp(binding.binaryMessenger, apiImpl)
         Log.d(TAG, "FlutterBeaconFenceApi setup complete.")
     }
 
