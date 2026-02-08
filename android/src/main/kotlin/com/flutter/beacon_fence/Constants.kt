@@ -1,5 +1,7 @@
 package com.flutter.beacon_fence
 
+import org.altbeacon.beacon.BeaconParser
+
 class Constants {
     companion object {
         private const val PACKAGE_NAME = "com.flutter.beacon_fence"
@@ -13,5 +15,7 @@ class Constants {
 
         const val WORKER_PAYLOAD_KEY = "$PACKAGE_NAME.worker_payload"
         const val BEACON_CALLBACK_WORK_GROUP = "beacon_callback_work_group"
+
+        val IBEACON_PARSER = BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
     }
 }

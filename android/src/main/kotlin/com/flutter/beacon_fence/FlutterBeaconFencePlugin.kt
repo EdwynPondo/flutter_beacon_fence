@@ -3,6 +3,7 @@ package com.flutter.beacon_fence
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.flutter.beacon_fence.Constants.Companion.IBEACON_PARSER
 import com.flutter.beacon_fence.api.BeaconFenceApiImpl
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceApi
 import com.flutter.beacon_fence.util.BeaconNotifier
@@ -10,7 +11,6 @@ import com.flutter.beacon_fence.util.NativeBeaconPersistence
 import com.flutter.beacon_fence.util.Notifications
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import org.altbeacon.beacon.BeaconManager
-import org.altbeacon.beacon.BeaconParser
 
 class FlutterBeaconFencePlugin : FlutterPlugin {
     private var context: Context? = null
@@ -33,8 +33,8 @@ class FlutterBeaconFencePlugin : FlutterPlugin {
         val beaconManager = BeaconManager.getInstanceForApplication(context).apply {
             // Support iBeacon
             beaconParsers.apply {
-                clear()
-                add(BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
+                if (contains(IBEACON_PARSER)) return;
+                add(IBEACON_PARSER)
             }
             // Register BeaconNotifier as a monitor notifier to receive enter/exit events
             removeAllMonitorNotifiers()
@@ -50,7 +50,9 @@ class FlutterBeaconFencePlugin : FlutterPlugin {
                 backgroundBetweenScanPeriod = initialScannerSettings.backgroundBetweenScanPeriodMillis
                 try {
                     updateScanPeriods()
-                    if (initialScannerSettings.useForegroundService && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (!isAnyConsumerBound() &&
+                        initialScannerSettings.useForegroundService &&
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val notification = Notifications.createForegroundServiceNotification(context)
                         enableForegroundServiceScanning(notification, 938131)
                     }
