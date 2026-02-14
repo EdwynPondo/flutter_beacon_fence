@@ -257,7 +257,7 @@ data class AndroidScannerSettingsWire (
   val foregroundBetweenScanPeriodMillis: Long,
   val backgroundScanPeriodMillis: Long,
   val backgroundBetweenScanPeriodMillis: Long,
-  val useForegroundService: Boolean,
+  var useForegroundService: Boolean,
   val notificationsSettings: AndroidNotificationsSettingsWire? = null
 )
  {

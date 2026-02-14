@@ -13,7 +13,11 @@ class Notifications {
     companion object {
         // TODO: Make notification details customizable by plugin user.
         @RequiresApi(Build.VERSION_CODES.O)
-        fun createForegroundServiceNotification(context: Context): Notification {
+        fun createForegroundServiceNotification(
+            context: Context,
+            title: String,
+            content: String
+        ): Notification {
             val channelId = "flutter_beacon_fence_plugin_channel"
             val channel = NotificationChannel(
                 channelId,
@@ -30,8 +34,8 @@ class Notifications {
                 channel
             )
             return NotificationCompat.Builder(context, channelId)
-                .setContentTitle("Listening for sessions")
-                .setContentText("We will keep you updated")
+                .setContentTitle(title)
+                .setContentText(content)
                 .setSmallIcon(imageId)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()

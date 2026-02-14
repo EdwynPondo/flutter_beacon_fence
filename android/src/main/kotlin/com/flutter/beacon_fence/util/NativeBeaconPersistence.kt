@@ -9,6 +9,7 @@ import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage
 import com.flutter.beacon_fence.model.BeaconStorage
 import kotlinx.serialization.json.Json
 import androidx.core.content.edit
+import com.flutter.beacon_fence.generated.AndroidNotificationsSettingsWire
 
 class NativeBeaconPersistence {
     companion object {
@@ -134,16 +135,16 @@ class NativeBeaconPersistence {
                 } else {
                     HashSet<String>(persistentBeacons)
                 }
-                val editor = context.getSharedPreferences(
+                context.getSharedPreferences(
                     Constants.SHARED_PREFERENCES_KEY,
                     Context.MODE_PRIVATE
                 )
-                    .edit()
-                    .remove(Constants.PERSISTENT_BEACONS_IDS_KEY)
-                for (id in persistentBeacons) {
-                    editor.remove(getBeaconKey(id))
-                }
-                editor.apply()
+                    .edit {
+                        remove(Constants.PERSISTENT_BEACONS_IDS_KEY)
+                        for (id in persistentBeacons) {
+                            remove(getBeaconKey(id))
+                        }
+                    }
                 Log.d(TAG, "Removed ${persistentBeacons.size} Beacons from storage.")
             }
         }
