@@ -94,12 +94,23 @@ class AndroidBeaconSettingsWire {
   });
 }
 
+class AndroidNotificationsSettingsWire {
+  final String title;
+  final String content;
+
+  const AndroidNotificationsSettingsWire({
+    required this.title,
+    required this.content,
+  });
+}
+
 class AndroidScannerSettingsWire {
   final int foregroundScanPeriodMillis;
   final int foregroundBetweenScanPeriodMillis;
   final int backgroundScanPeriodMillis;
   final int backgroundBetweenScanPeriodMillis;
   final bool useForegroundService;
+  final AndroidNotificationsSettingsWire? notificationsSettings;
 
   const AndroidScannerSettingsWire({
     required this.foregroundScanPeriodMillis,
@@ -107,6 +118,7 @@ class AndroidScannerSettingsWire {
     required this.backgroundScanPeriodMillis,
     required this.backgroundBetweenScanPeriodMillis,
     required this.useForegroundService,
+    this.notificationsSettings,
   });
 }
 

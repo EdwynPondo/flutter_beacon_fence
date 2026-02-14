@@ -8,6 +8,7 @@ import com.flutter.beacon_fence.generated.BeaconWire
 import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage
 import com.flutter.beacon_fence.model.BeaconStorage
 import kotlinx.serialization.json.Json
+import androidx.core.content.edit
 
 class NativeBeaconPersistence {
     companion object {
@@ -39,10 +40,10 @@ class NativeBeaconPersistence {
                 }
                 persistentBeacons.add(beacon.id)
                 context.getSharedPreferences(Constants.SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
-                    .edit()
-                    .putStringSet(Constants.PERSISTENT_BEACONS_IDS_KEY, persistentBeacons)
-                    .putString(getBeaconKey(beacon.id), jsonData)
-                    .apply()
+                    .edit {
+                        putStringSet(Constants.PERSISTENT_BEACONS_IDS_KEY, persistentBeacons)
+                            .putString(getBeaconKey(beacon.id), jsonData)
+                    }
                 Log.d(TAG, "Saved Beacon ID=${beacon.id} to storage.")
             }
         }
@@ -111,10 +112,10 @@ class NativeBeaconPersistence {
                 }
                 persistentBeacons.remove(beaconId)
                 context.getSharedPreferences(Constants.SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
-                    .edit()
-                    .putStringSet(Constants.PERSISTENT_BEACONS_IDS_KEY, persistentBeacons)
-                    .remove(getBeaconKey(beaconId))
-                    .apply()
+                    .edit {
+                        putStringSet(Constants.PERSISTENT_BEACONS_IDS_KEY, persistentBeacons)
+                            .remove(getBeaconKey(beaconId))
+                    }
                 Log.d(TAG, "Removed Beacon ID=${beaconId} from storage.")
             }
         }
@@ -152,9 +153,9 @@ class NativeBeaconPersistence {
             synchronized(sharedPreferencesLock) {
                 val jsonData = Json.encodeToString(AndroidScannerSettingsStorage.fromWire(settings))
                 context.getSharedPreferences(Constants.SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
-                    .edit()
-                    .putString(Constants.PERSISTENT_SCANNER_SETTINGS_KEY, jsonData)
-                    .apply()
+                    .edit {
+                        putString(Constants.PERSISTENT_SCANNER_SETTINGS_KEY, jsonData)
+                    }
                 Log.d(TAG, "Saved Scanner Settings to storage.")
             }
         }

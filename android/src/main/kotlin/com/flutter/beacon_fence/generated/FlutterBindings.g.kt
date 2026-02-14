@@ -221,12 +221,44 @@ data class AndroidBeaconSettingsWire (
 }
 
 /** Generated class from Pigeon that represents data sent in messages. */
+data class AndroidNotificationsSettingsWire (
+  val title: String,
+  val content: String
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AndroidNotificationsSettingsWire {
+      val title = pigeonVar_list[0] as String
+      val content = pigeonVar_list[1] as String
+      return AndroidNotificationsSettingsWire(title, content)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      title,
+      content,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is AndroidNotificationsSettingsWire) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return FlutterBindingsPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/** Generated class from Pigeon that represents data sent in messages. */
 data class AndroidScannerSettingsWire (
   val foregroundScanPeriodMillis: Long,
   val foregroundBetweenScanPeriodMillis: Long,
   val backgroundScanPeriodMillis: Long,
   val backgroundBetweenScanPeriodMillis: Long,
-  val useForegroundService: Boolean
+  val useForegroundService: Boolean,
+  val notificationsSettings: AndroidNotificationsSettingsWire? = null
 )
  {
   companion object {
@@ -236,7 +268,8 @@ data class AndroidScannerSettingsWire (
       val backgroundScanPeriodMillis = pigeonVar_list[2] as Long
       val backgroundBetweenScanPeriodMillis = pigeonVar_list[3] as Long
       val useForegroundService = pigeonVar_list[4] as Boolean
-      return AndroidScannerSettingsWire(foregroundScanPeriodMillis, foregroundBetweenScanPeriodMillis, backgroundScanPeriodMillis, backgroundBetweenScanPeriodMillis, useForegroundService)
+      val notificationsSettings = pigeonVar_list[5] as AndroidNotificationsSettingsWire?
+      return AndroidScannerSettingsWire(foregroundScanPeriodMillis, foregroundBetweenScanPeriodMillis, backgroundScanPeriodMillis, backgroundBetweenScanPeriodMillis, useForegroundService, notificationsSettings)
     }
   }
   fun toList(): List<Any?> {
@@ -246,6 +279,7 @@ data class AndroidScannerSettingsWire (
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
       useForegroundService,
+      notificationsSettings,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -413,20 +447,25 @@ private open class FlutterBindingsPigeonCodec : StandardMessageCodec() {
       }
       133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AndroidScannerSettingsWire.fromList(it)
+          AndroidNotificationsSettingsWire.fromList(it)
         }
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BeaconWire.fromList(it)
+          AndroidScannerSettingsWire.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ActiveBeaconWire.fromList(it)
+          BeaconWire.fromList(it)
         }
       }
       136.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ActiveBeaconWire.fromList(it)
+        }
+      }
+      137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           BeaconCallbackParamsWire.fromList(it)
         }
@@ -452,20 +491,24 @@ private open class FlutterBindingsPigeonCodec : StandardMessageCodec() {
         stream.write(132)
         writeValue(stream, value.toList())
       }
-      is AndroidScannerSettingsWire -> {
+      is AndroidNotificationsSettingsWire -> {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is BeaconWire -> {
+      is AndroidScannerSettingsWire -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is ActiveBeaconWire -> {
+      is BeaconWire -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is BeaconCallbackParamsWire -> {
+      is ActiveBeaconWire -> {
         stream.write(136)
+        writeValue(stream, value.toList())
+      }
+      is BeaconCallbackParamsWire -> {
+        stream.write(137)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
