@@ -203,7 +203,7 @@ abstract class FlutterBeaconFenceApi {
 abstract class FlutterBeaconFenceBackgroundApi {
   void triggerApiInitialized();
 
-  void promoteToForeground();
+  void promoteToForeground({AndroidNotificationsSettingsWire? settings});
 
   void demoteToBackground();
 }

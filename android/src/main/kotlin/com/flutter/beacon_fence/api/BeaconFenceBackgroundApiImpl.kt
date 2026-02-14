@@ -27,9 +27,9 @@ class BeaconFenceBackgroundApiImpl(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun promoteToForeground() {
+    override fun promoteToForeground(settings: AndroidNotificationsSettingsWire?) {
         val beaconManager = BeaconManager.getInstanceForApplication(context)
-        val settings = androidScannerSettingsWire(beaconManager, true)
+        val settings = androidScannerSettingsWire(beaconManager, useForeground = true, settings)
         val notificationSettings = settings.notificationsSettings
             ?: AndroidNotificationSettingStore.DEFAULT_WIRE
         val notification = Notifications.createForegroundServiceNotification(
@@ -53,10 +53,11 @@ class BeaconFenceBackgroundApiImpl(
 
     private fun androidScannerSettingsWire(
         beaconManager: BeaconManager,
-        useForeground: Boolean
+        useForeground: Boolean,
+        notificationSettings: AndroidNotificationsSettingsWire? = null,
     ): AndroidScannerSettingsWire {
         val settings = NativeBeaconPersistence
-            .getScannerSettings(context)?.apply { useForegroundService = true }
+            .getScannerSettings(context)
             ?: AndroidScannerSettingsWire(
                 beaconManager.foregroundScanPeriod,
                 beaconManager.foregroundBetweenScanPeriod,
@@ -64,6 +65,9 @@ class BeaconFenceBackgroundApiImpl(
                 beaconManager.backgroundBetweenScanPeriod,
                 useForeground,
             )
-        return settings
+        return settings.copy(
+            useForegroundService = useForeground,
+            notificationsSettings = notificationSettings ?: settings.notificationsSettings
+        )
     }
 }

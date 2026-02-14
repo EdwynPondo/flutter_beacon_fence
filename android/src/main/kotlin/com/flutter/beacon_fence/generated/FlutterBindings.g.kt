@@ -257,7 +257,7 @@ data class AndroidScannerSettingsWire (
   val foregroundBetweenScanPeriodMillis: Long,
   val backgroundScanPeriodMillis: Long,
   val backgroundBetweenScanPeriodMillis: Long,
-  var useForegroundService: Boolean,
+  val useForegroundService: Boolean,
   val notificationsSettings: AndroidNotificationsSettingsWire? = null
 )
  {
@@ -681,7 +681,7 @@ interface FlutterBeaconFenceApi {
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface FlutterBeaconFenceBackgroundApi {
   fun triggerApiInitialized()
-  fun promoteToForeground()
+  fun promoteToForeground(settings: AndroidNotificationsSettingsWire?)
   fun demoteToBackground()
 
   companion object {
@@ -712,9 +712,11 @@ interface FlutterBeaconFenceBackgroundApi {
       run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceBackgroundApi.promoteToForeground$separatedMessageChannelSuffix", codec)
         if (api != null) {
-          channel.setMessageHandler { _, reply ->
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val settingsArg = args[0] as AndroidNotificationsSettingsWire?
             val wrapped: List<Any?> = try {
-              api.promoteToForeground()
+              api.promoteToForeground(settingsArg)
               listOf(null)
             } catch (exception: Throwable) {
               FlutterBindingsPigeonUtils.wrapError(exception)

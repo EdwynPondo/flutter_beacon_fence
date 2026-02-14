@@ -83,6 +83,12 @@ extension AndroidBeaconSettingsWireMapper on AndroidBeaconSettingsWire {
   }
 }
 
+extension AndroidNotificationSettingsMapper on AndroidNotificationSettings {
+  AndroidNotificationsSettingsWire toWire() {
+    return AndroidNotificationsSettingsWire(title: title, content: content);
+  }
+}
+
 extension AndroidScannerSettingsMapper on AndroidScannerSettings {
   AndroidScannerSettingsWire toWire() {
     return AndroidScannerSettingsWire(
@@ -93,6 +99,7 @@ extension AndroidScannerSettingsMapper on AndroidScannerSettings {
       backgroundBetweenScanPeriodMillis:
           backgroundBetweenScanPeriod.inMilliseconds,
       useForegroundService: useForegroundService,
+      notificationsSettings: notificationSettings?.toWire(),
     );
   }
 }

@@ -46,6 +46,24 @@ class AndroidBeaconSettings {
   }
 }
 
+/// Android specific Notification settings (Foreground).
+class AndroidNotificationSettings {
+  final String title;
+  final String content;
+
+  const AndroidNotificationSettings({
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  String toString() {
+    return 'AndroidNotificationSettings('
+        'title: $title, '
+        'content: $content)';
+  }
+}
+
 /// Android specific Scanner settings.
 class AndroidScannerSettings {
   /// The duration to scan for beacons when the app is in the foreground.
@@ -63,6 +81,7 @@ class AndroidScannerSettings {
   /// Whether to use a foreground service for scanning in the background.
   /// This ensures reliable scanning on modern Android versions.
   final bool useForegroundService;
+  final AndroidNotificationSettings? notificationSettings;
 
   const AndroidScannerSettings({
     this.foregroundScanPeriod = const Duration(milliseconds: 1100),
@@ -70,6 +89,7 @@ class AndroidScannerSettings {
     this.backgroundScanPeriod = const Duration(milliseconds: 1100),
     this.backgroundBetweenScanPeriod = const Duration(seconds: 0),
     this.useForegroundService = false,
+    this.notificationSettings,
   });
 
   @override
@@ -79,7 +99,8 @@ class AndroidScannerSettings {
         'foregroundBetweenScanPeriod: ${foregroundBetweenScanPeriod.inMilliseconds}ms, '
         'backgroundScanPeriod: ${backgroundScanPeriod.inMilliseconds}ms, '
         'backgroundBetweenScanPeriod: ${backgroundBetweenScanPeriod.inMilliseconds}ms, '
-        'useForegroundService: $useForegroundService)';
+        'useForegroundService: $useForegroundService, )'
+        'notificationSettings: $notificationSettings';
   }
 }
 

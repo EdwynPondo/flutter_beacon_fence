@@ -828,7 +828,8 @@ class FlutterBeaconFenceBackgroundApi {
     }
   }
 
-  Future<void> promoteToForeground() async {
+  Future<void> promoteToForeground(
+      {AndroidNotificationsSettingsWire? settings}) async {
     final pigeonVar_channelName =
         'dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceBackgroundApi.promoteToForeground$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
@@ -836,7 +837,8 @@ class FlutterBeaconFenceBackgroundApi {
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[settings]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
     if (pigeonVar_replyList == null) {
       throw _createConnectionError(pigeonVar_channelName);

@@ -677,7 +677,7 @@ class FlutterBeaconFenceApiSetup {
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol FlutterBeaconFenceBackgroundApi {
   func triggerApiInitialized() throws
-  func promoteToForeground() throws
+  func promoteToForeground(settings: AndroidNotificationsSettingsWire?) throws
   func demoteToBackground() throws
 }
 
@@ -702,9 +702,11 @@ class FlutterBeaconFenceBackgroundApiSetup {
     }
     let promoteToForegroundChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceBackgroundApi.promoteToForeground\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      promoteToForegroundChannel.setMessageHandler { _, reply in
+      promoteToForegroundChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let settingsArg: AndroidNotificationsSettingsWire? = nilOrValue(args[0])
         do {
-          try api.promoteToForeground()
+          try api.promoteToForeground(settings: settingsArg)
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))
