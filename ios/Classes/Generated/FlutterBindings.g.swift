@@ -241,12 +241,42 @@ struct AndroidBeaconSettingsWire: Hashable {
 }
 
 /// Generated class from Pigeon that represents data sent in messages.
+struct AndroidNotificationsSettingsWire: Hashable {
+  var title: String
+  var content: String
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> AndroidNotificationsSettingsWire? {
+    let title = pigeonVar_list[0] as! String
+    let content = pigeonVar_list[1] as! String
+
+    return AndroidNotificationsSettingsWire(
+      title: title,
+      content: content
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      title,
+      content,
+    ]
+  }
+  static func == (lhs: AndroidNotificationsSettingsWire, rhs: AndroidNotificationsSettingsWire) -> Bool {
+    return deepEqualsFlutterBindings(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashFlutterBindings(value: toList(), hasher: &hasher)
+  }
+}
+
+/// Generated class from Pigeon that represents data sent in messages.
 struct AndroidScannerSettingsWire: Hashable {
   var foregroundScanPeriodMillis: Int64
   var foregroundBetweenScanPeriodMillis: Int64
   var backgroundScanPeriodMillis: Int64
   var backgroundBetweenScanPeriodMillis: Int64
   var useForegroundService: Bool
+  var notificationsSettings: AndroidNotificationsSettingsWire? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -256,13 +286,15 @@ struct AndroidScannerSettingsWire: Hashable {
     let backgroundScanPeriodMillis = pigeonVar_list[2] as! Int64
     let backgroundBetweenScanPeriodMillis = pigeonVar_list[3] as! Int64
     let useForegroundService = pigeonVar_list[4] as! Bool
+    let notificationsSettings: AndroidNotificationsSettingsWire? = nilOrValue(pigeonVar_list[5])
 
     return AndroidScannerSettingsWire(
       foregroundScanPeriodMillis: foregroundScanPeriodMillis,
       foregroundBetweenScanPeriodMillis: foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis: backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis: backgroundBetweenScanPeriodMillis,
-      useForegroundService: useForegroundService
+      useForegroundService: useForegroundService,
+      notificationsSettings: notificationsSettings
     )
   }
   func toList() -> [Any?] {
@@ -272,6 +304,7 @@ struct AndroidScannerSettingsWire: Hashable {
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
       useForegroundService,
+      notificationsSettings,
     ]
   }
   static func == (lhs: AndroidScannerSettingsWire, rhs: AndroidScannerSettingsWire) -> Bool {
@@ -436,12 +469,14 @@ private class FlutterBindingsPigeonCodecReader: FlutterStandardReader {
     case 132:
       return AndroidBeaconSettingsWire.fromList(self.readValue() as! [Any?])
     case 133:
-      return AndroidScannerSettingsWire.fromList(self.readValue() as! [Any?])
+      return AndroidNotificationsSettingsWire.fromList(self.readValue() as! [Any?])
     case 134:
-      return BeaconWire.fromList(self.readValue() as! [Any?])
+      return AndroidScannerSettingsWire.fromList(self.readValue() as! [Any?])
     case 135:
-      return ActiveBeaconWire.fromList(self.readValue() as! [Any?])
+      return BeaconWire.fromList(self.readValue() as! [Any?])
     case 136:
+      return ActiveBeaconWire.fromList(self.readValue() as! [Any?])
+    case 137:
       return BeaconCallbackParamsWire.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -463,17 +498,20 @@ private class FlutterBindingsPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? AndroidBeaconSettingsWire {
       super.writeByte(132)
       super.writeValue(value.toList())
-    } else if let value = value as? AndroidScannerSettingsWire {
+    } else if let value = value as? AndroidNotificationsSettingsWire {
       super.writeByte(133)
       super.writeValue(value.toList())
-    } else if let value = value as? BeaconWire {
+    } else if let value = value as? AndroidScannerSettingsWire {
       super.writeByte(134)
       super.writeValue(value.toList())
-    } else if let value = value as? ActiveBeaconWire {
+    } else if let value = value as? BeaconWire {
       super.writeByte(135)
       super.writeValue(value.toList())
-    } else if let value = value as? BeaconCallbackParamsWire {
+    } else if let value = value as? ActiveBeaconWire {
       super.writeByte(136)
+      super.writeValue(value.toList())
+    } else if let value = value as? BeaconCallbackParamsWire {
+      super.writeByte(137)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -639,7 +677,7 @@ class FlutterBeaconFenceApiSetup {
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol FlutterBeaconFenceBackgroundApi {
   func triggerApiInitialized() throws
-  func promoteToForeground() throws
+  func promoteToForeground(settings: AndroidNotificationsSettingsWire?) throws
   func demoteToBackground() throws
 }
 
@@ -664,9 +702,11 @@ class FlutterBeaconFenceBackgroundApiSetup {
     }
     let promoteToForegroundChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceBackgroundApi.promoteToForeground\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      promoteToForegroundChannel.setMessageHandler { _, reply in
+      promoteToForegroundChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let settingsArg: AndroidNotificationsSettingsWire? = nilOrValue(args[0])
         do {
-          try api.promoteToForeground()
+          try api.promoteToForeground(settings: settingsArg)
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))

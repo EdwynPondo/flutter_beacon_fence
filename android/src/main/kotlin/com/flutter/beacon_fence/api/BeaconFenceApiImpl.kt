@@ -20,6 +20,7 @@ import org.altbeacon.beacon.Identifier
 import androidx.core.content.edit
 import com.flutter.beacon_fence.generated.BeaconFenceErrorCode
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceApi
+import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
 
 class BeaconFenceApiImpl(
     private val context: Context,
@@ -123,7 +124,12 @@ class BeaconFenceApiImpl(
             
             
             if (settings.useForegroundService && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val notification = Notifications.createForegroundServiceNotification(context)
+                val notificationSettings = settings.notificationsSettings ?: AndroidNotificationSettingStore.DEFAULT_WIRE
+                val notification = Notifications.createForegroundServiceNotification(
+                    context,
+                    notificationSettings.title,
+                    notificationSettings.content
+                )
                 // Using a unique ID for AltBeacon's foreground service
                 beaconManager.enableForegroundServiceScanning(notification, 938131)
             } else {

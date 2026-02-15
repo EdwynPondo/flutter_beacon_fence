@@ -132,7 +132,7 @@ class FlutterBeaconFenceManager {
   Future<List<ActiveBeacon>> getRegisteredBeacons() async => _api
       .getBeacons()
       .then((value) => value.map((e) => e.fromWire()).toList())
-      .catchError(BeaconFenceExceptionMapper.catchError<List<Beacon>>);
+      .catchError(BeaconFenceExceptionMapper.catchError<List<ActiveBeacon>>);
 
   /// Stop receiving beacon events for a given [Beacon].
   ///

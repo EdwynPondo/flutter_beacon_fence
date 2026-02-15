@@ -32,7 +32,7 @@ class BeaconFenceBackgroundApiImpl: FlutterBeaconFenceBackgroundApi {
         processQueues()
     }
 
-    func promoteToForeground() throws {
+    func promoteToForeground(settings: AndroidNotificationsSettingsWire?) throws {
         log.info("promoteToForeground called. iOS does not distinguish between foreground and background, nothing to do here.")
     }
     

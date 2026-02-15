@@ -5,8 +5,10 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.flutter.beacon_fence.FlutterBeaconFenceBackgroundWorker
+import com.flutter.beacon_fence.generated.AndroidNotificationsSettingsWire
 import com.flutter.beacon_fence.generated.AndroidScannerSettingsWire
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceBackgroundApi
+import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
 import com.flutter.beacon_fence.util.Notifications
 import org.altbeacon.beacon.BeaconManager
@@ -25,10 +27,16 @@ class BeaconFenceBackgroundApiImpl(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun promoteToForeground() {
+    override fun promoteToForeground(settings: AndroidNotificationsSettingsWire?) {
         val beaconManager = BeaconManager.getInstanceForApplication(context)
-        val settings = androidScannerSettingsWire(beaconManager, true)
-        val notification = Notifications.createForegroundServiceNotification(context)
+        val settings = androidScannerSettingsWire(beaconManager, useForeground = true, settings)
+        val notificationSettings = settings.notificationsSettings
+            ?: AndroidNotificationSettingStore.DEFAULT_WIRE
+        val notification = Notifications.createForegroundServiceNotification(
+            context,
+            notificationSettings.title,
+            notificationSettings.content
+        )
         beaconManager.enableForegroundServiceScanning(notification, 938131)
         NativeBeaconPersistence.saveScannerSettings(context, settings)
         Log.d(TAG, "Promoted background service to foreground service.")
@@ -45,15 +53,21 @@ class BeaconFenceBackgroundApiImpl(
 
     private fun androidScannerSettingsWire(
         beaconManager: BeaconManager,
-        useForeground: Boolean
+        useForeground: Boolean,
+        notificationSettings: AndroidNotificationsSettingsWire? = null,
     ): AndroidScannerSettingsWire {
-        NativeBeaconPersistence.getScannerSettings(context)
-        return NativeBeaconPersistence.getScannerSettings(context) ?: AndroidScannerSettingsWire(
-            beaconManager.foregroundScanPeriod,
-            beaconManager.foregroundBetweenScanPeriod,
-            beaconManager.backgroundScanPeriod,
-            beaconManager.backgroundBetweenScanPeriod,
-            useForeground,
+        val settings = NativeBeaconPersistence
+            .getScannerSettings(context)
+            ?: AndroidScannerSettingsWire(
+                beaconManager.foregroundScanPeriod,
+                beaconManager.foregroundBetweenScanPeriod,
+                beaconManager.backgroundScanPeriod,
+                beaconManager.backgroundBetweenScanPeriod,
+                useForeground,
+            )
+        return settings.copy(
+            useForegroundService = useForeground,
+            notificationsSettings = notificationSettings ?: settings.notificationsSettings
         )
     }
 }

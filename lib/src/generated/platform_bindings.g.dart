@@ -193,6 +193,53 @@ class AndroidBeaconSettingsWire {
   int get hashCode => Object.hashAll(_toList());
 }
 
+class AndroidNotificationsSettingsWire {
+  AndroidNotificationsSettingsWire({
+    required this.title,
+    required this.content,
+  });
+
+  String title;
+
+  String content;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      title,
+      content,
+    ];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static AndroidNotificationsSettingsWire decode(Object result) {
+    result as List<Object?>;
+    return AndroidNotificationsSettingsWire(
+      title: result[0]! as String,
+      content: result[1]! as String,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AndroidNotificationsSettingsWire ||
+        other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList());
+}
+
 class AndroidScannerSettingsWire {
   AndroidScannerSettingsWire({
     required this.foregroundScanPeriodMillis,
@@ -200,6 +247,7 @@ class AndroidScannerSettingsWire {
     required this.backgroundScanPeriodMillis,
     required this.backgroundBetweenScanPeriodMillis,
     required this.useForegroundService,
+    this.notificationsSettings,
   });
 
   int foregroundScanPeriodMillis;
@@ -212,6 +260,8 @@ class AndroidScannerSettingsWire {
 
   bool useForegroundService;
 
+  AndroidNotificationsSettingsWire? notificationsSettings;
+
   List<Object?> _toList() {
     return <Object?>[
       foregroundScanPeriodMillis,
@@ -219,6 +269,7 @@ class AndroidScannerSettingsWire {
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
       useForegroundService,
+      notificationsSettings,
     ];
   }
 
@@ -234,6 +285,7 @@ class AndroidScannerSettingsWire {
       backgroundScanPeriodMillis: result[2]! as int,
       backgroundBetweenScanPeriodMillis: result[3]! as int,
       useForegroundService: result[4]! as bool,
+      notificationsSettings: result[5] as AndroidNotificationsSettingsWire?,
     );
   }
 
@@ -473,17 +525,20 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is AndroidBeaconSettingsWire) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
-    } else if (value is AndroidScannerSettingsWire) {
+    } else if (value is AndroidNotificationsSettingsWire) {
       buffer.putUint8(133);
       writeValue(buffer, value.encode());
-    } else if (value is BeaconWire) {
+    } else if (value is AndroidScannerSettingsWire) {
       buffer.putUint8(134);
       writeValue(buffer, value.encode());
-    } else if (value is ActiveBeaconWire) {
+    } else if (value is BeaconWire) {
       buffer.putUint8(135);
       writeValue(buffer, value.encode());
-    } else if (value is BeaconCallbackParamsWire) {
+    } else if (value is ActiveBeaconWire) {
       buffer.putUint8(136);
+      writeValue(buffer, value.encode());
+    } else if (value is BeaconCallbackParamsWire) {
+      buffer.putUint8(137);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -504,12 +559,14 @@ class _PigeonCodec extends StandardMessageCodec {
       case 132:
         return AndroidBeaconSettingsWire.decode(readValue(buffer)!);
       case 133:
-        return AndroidScannerSettingsWire.decode(readValue(buffer)!);
+        return AndroidNotificationsSettingsWire.decode(readValue(buffer)!);
       case 134:
-        return BeaconWire.decode(readValue(buffer)!);
+        return AndroidScannerSettingsWire.decode(readValue(buffer)!);
       case 135:
-        return ActiveBeaconWire.decode(readValue(buffer)!);
+        return BeaconWire.decode(readValue(buffer)!);
       case 136:
+        return ActiveBeaconWire.decode(readValue(buffer)!);
+      case 137:
         return BeaconCallbackParamsWire.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -771,7 +828,8 @@ class FlutterBeaconFenceBackgroundApi {
     }
   }
 
-  Future<void> promoteToForeground() async {
+  Future<void> promoteToForeground(
+      {AndroidNotificationsSettingsWire? settings}) async {
     final pigeonVar_channelName =
         'dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceBackgroundApi.promoteToForeground$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
@@ -779,7 +837,8 @@ class FlutterBeaconFenceBackgroundApi {
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[settings]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
     if (pigeonVar_replyList == null) {
       throw _createConnectionError(pigeonVar_channelName);

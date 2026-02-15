@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import com.flutter.beacon_fence.Constants.Companion.IBEACON_PARSER
 import com.flutter.beacon_fence.api.BeaconFenceApiImpl
+import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
 import com.flutter.beacon_fence.util.BeaconNotifier
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
 import com.flutter.beacon_fence.util.Notifications
@@ -49,7 +50,13 @@ class BeaconFenceRebootBroadcastReceiver : BroadcastReceiver() {
                     if (!isAnyConsumerBound() &&
                         initialScannerSettings.useForegroundService &&
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val notification = Notifications.createForegroundServiceNotification(context)
+                        val notificationSettings = initialScannerSettings.notificationsSettings
+                            ?: AndroidNotificationSettingStore.DEFAULT_WIRE
+                        val notification = Notifications.createForegroundServiceNotification(
+                            context,
+                            notificationSettings.title,
+                            notificationSettings.content
+                        )
                         enableForegroundServiceScanning(notification, 938131)
                     }
                 } catch (e: Exception) {
