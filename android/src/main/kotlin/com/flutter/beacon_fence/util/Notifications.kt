@@ -25,7 +25,7 @@ class Notifications {
                 // This has to be at least IMPORTANCE_LOW.
                 // Source: https://developer.android.com/develop/background-work/services/foreground-services#start
                 NotificationManager.IMPORTANCE_LOW
-            )
+            ).apply { setShowBadge(false) }
 
             @SuppressLint("DiscouragedApi") // Can't use R syntax in Flutter plugin.
             val imageId = context.resources.getIdentifier("ic_launcher", "mipmap", context.packageName)

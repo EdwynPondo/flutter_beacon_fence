@@ -104,17 +104,6 @@ class FlutterBeaconFenceManager {
         .catchError(BeaconFenceExceptionMapper.catchError<void>);
   }
 
-  /// Re-register beacons after reboot.
-  ///
-  /// Optional: This function can be called when the autostart feature is not
-  /// working as it should (e.g. for some Android OEMs). This way you can ensure
-  /// all Beacons are re-created at app launch.
-  ///
-  /// Throws [BeaconFenceException].
-  Future<void> reCreateAfterReboot() async => _api
-      .reCreateAfterReboot()
-      .catchError(BeaconFenceExceptionMapper.catchError<void>);
-
   /// Get all registered [Beacon] IDs.
   ///
   /// If there are no beacons registered it returns an empty list.

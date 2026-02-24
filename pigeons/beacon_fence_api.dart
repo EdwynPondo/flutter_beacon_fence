@@ -183,8 +183,6 @@ abstract class FlutterBeaconFenceApi {
   @async
   void createBeacon({required BeaconWire beacon});
 
-  void reCreateAfterReboot();
-
   List<String> getBeaconIds();
 
   List<ActiveBeaconWire> getBeacons();
