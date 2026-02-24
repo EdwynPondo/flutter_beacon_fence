@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.flutter.beacon_fence.Constants.Companion.IBEACON_PARSER
+import com.flutter.beacon_fence.Constants
 import com.flutter.beacon_fence.api.BeaconFenceApiImpl
 import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
 import com.flutter.beacon_fence.util.BeaconNotifier
@@ -31,14 +31,12 @@ class BeaconFenceRebootBroadcastReceiver : BroadcastReceiver() {
         val beaconManager = BeaconManager.getInstanceForApplication(context).apply {
             // Support iBeacon
             beaconParsers.apply {
-                if (contains(IBEACON_PARSER)) return;
-                add(IBEACON_PARSER)
+                if (contains(Constants.IBEACON_PARSER)) return@apply;
+                add(Constants.IBEACON_PARSER)
             }
             // Register BeaconNotifier
             removeAllMonitorNotifiers()
             addMonitorNotifier(beaconNotifier)
-            removeAllRangeNotifiers()
-            addRangeNotifier(beaconNotifier)
 
             if (initialScannerSettings != null) {
                 foregroundScanPeriod = initialScannerSettings.foregroundScanPeriodMillis
@@ -47,6 +45,11 @@ class BeaconFenceRebootBroadcastReceiver : BroadcastReceiver() {
                 backgroundBetweenScanPeriod = initialScannerSettings.backgroundBetweenScanPeriodMillis
                 try {
                     updateScanPeriods()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed into updateScanPeriods during init: $e")
+                }
+
+                try {
                     if (!isAnyConsumerBound() &&
                         initialScannerSettings.useForegroundService &&
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -57,7 +60,7 @@ class BeaconFenceRebootBroadcastReceiver : BroadcastReceiver() {
                             notificationSettings.title,
                             notificationSettings.content
                         )
-                        enableForegroundServiceScanning(notification, 938131)
+                        enableForegroundServiceScanning(notification, Constants.NOTIFICATION_ID)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed into updateScanPeriods during init: $e")

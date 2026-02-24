@@ -16,6 +16,8 @@ class Constants {
         const val WORKER_PAYLOAD_KEY = "$PACKAGE_NAME.worker_payload"
         const val BEACON_CALLBACK_WORK_GROUP = "beacon_callback_work_group"
 
+        const val NOTIFICATION_ID = 938131
+
         val IBEACON_PARSER = BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
     }
 }

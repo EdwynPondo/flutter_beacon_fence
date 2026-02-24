@@ -41,12 +41,14 @@ class BeaconFenceApiImpl(
     }
 
     override fun reCreateAfterReboot() {
+        Log.d(TAG, "reCreateAfterReboot: Fetching persisted beacons...")
         val beacons = NativeBeaconPersistence.getAllBeacons(context)
+        Log.d(TAG, "reCreateAfterReboot: Found ${beacons.size} beacons to re-create.")
         for (beacon in beacons) {
             createBeaconHelper(beacon, false, null)
         }
 
-        Log.d(TAG, "${beacons.size} beacons re-created.")
+        Log.d(TAG, "reCreateAfterReboot: ${beacons.size} beacons processing complete.")
     }
 
     override fun createBeacon(
@@ -131,7 +133,7 @@ class BeaconFenceApiImpl(
                     notificationSettings.content
                 )
                 // Using a unique ID for AltBeacon's foreground service
-                beaconManager.enableForegroundServiceScanning(notification, 938131)
+                beaconManager.enableForegroundServiceScanning(notification, Constants.NOTIFICATION_ID)
             } else {
                 beaconManager.disableForegroundServiceScanning()
             }
@@ -155,6 +157,7 @@ class BeaconFenceApiImpl(
         callback: ((Result<Unit>) -> Unit)?
     ) {
         try {
+            Log.d(TAG, "createBeaconHelper: Starting monitoring for Beacon ID=${beacon.id}")
             // Check Bluetooth permissions
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
@@ -162,6 +165,7 @@ class BeaconFenceApiImpl(
                 // and BLUETOOTH_SCAN on 31+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                      if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                         Log.e(TAG, "createBeaconHelper: Missing BLUETOOTH_SCAN permission for Beacon ID=${beacon.id}")
                          callback?.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.MISSING_BLUETOOTH_PERMISSION.raw.toString(), "Missing BLUETOOTH_SCAN permission")))
                          return
                      }
@@ -177,10 +181,10 @@ class BeaconFenceApiImpl(
                 NativeBeaconPersistence.saveBeacon(context, beacon)
             }
             
-            Log.d(TAG, "Successfully started monitoring Beacon ID=${beacon.id}.")
+            Log.d(TAG, "createBeaconHelper: Successfully started monitoring Beacon ID=${beacon.id}.")
             callback?.invoke(Result.success(Unit))
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to start monitoring Beacon ID=${beacon.id}: $e")
+            Log.e(TAG, "createBeaconHelper: Failed to start monitoring Beacon ID=${beacon.id}: $e")
             callback?.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.raw.toString(), e.toString())))
         }
     }
