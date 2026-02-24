@@ -31,7 +31,7 @@ class BeaconFenceRebootBroadcastReceiver : BroadcastReceiver() {
         val beaconManager = BeaconManager.getInstanceForApplication(context).apply {
             // Support iBeacon
             beaconParsers.apply {
-                if (contains(Constants.IBEACON_PARSER)) return@apply;
+                if (contains(Constants.IBEACON_PARSER)) return@apply
                 add(Constants.IBEACON_PARSER)
             }
             // Register BeaconNotifier
@@ -50,7 +50,7 @@ class BeaconFenceRebootBroadcastReceiver : BroadcastReceiver() {
                 }
 
                 try {
-                    if (!isAnyConsumerBound() &&
+                    if (!isAnyConsumerBound &&
                         initialScannerSettings.useForegroundService &&
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val notificationSettings = initialScannerSettings.notificationsSettings

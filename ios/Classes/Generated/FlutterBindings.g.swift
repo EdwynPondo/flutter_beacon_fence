@@ -538,7 +538,6 @@ class FlutterBindingsPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendab
 protocol FlutterBeaconFenceApi {
   func initialize(callbackDispatcherHandle: Int64) throws
   func createBeacon(beacon: BeaconWire, completion: @escaping (Result<Void, Error>) -> Void)
-  func reCreateAfterReboot() throws
   func getBeaconIds() throws -> [String]
   func getBeacons() throws -> [ActiveBeaconWire]
   func removeBeaconById(id: String, completion: @escaping (Result<Void, Error>) -> Void)
@@ -583,19 +582,6 @@ class FlutterBeaconFenceApiSetup {
       }
     } else {
       createBeaconChannel.setMessageHandler(nil)
-    }
-    let reCreateAfterRebootChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceApi.reCreateAfterReboot\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
-    if let api = api {
-      reCreateAfterRebootChannel.setMessageHandler { _, reply in
-        do {
-          try api.reCreateAfterReboot()
-          reply(wrapResult(nil))
-        } catch {
-          reply(wrapError(error))
-        }
-      }
-    } else {
-      reCreateAfterRebootChannel.setMessageHandler(nil)
     }
     let getBeaconIdsChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceApi.getBeaconIds\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {

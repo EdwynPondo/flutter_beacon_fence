@@ -33,7 +33,7 @@ class FlutterBeaconFencePlugin : FlutterPlugin {
         val beaconManager = BeaconManager.getInstanceForApplication(context).apply {
             // Support iBeacon
             beaconParsers.apply {
-                if (contains(Constants.IBEACON_PARSER)) return@apply;
+                if (contains(Constants.IBEACON_PARSER)) return@apply
                 add(Constants.IBEACON_PARSER)
             }
             // Register BeaconNotifier as a monitor notifier to receive enter/exit events
@@ -55,7 +55,7 @@ class FlutterBeaconFencePlugin : FlutterPlugin {
                     Log.e(TAG, "Failed into updateScanPeriods during init: $e")
                 }
 
-                if (!isAnyConsumerBound() &&
+                if (!isAnyConsumerBound &&
                     initialScannerSettings.useForegroundService &&
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     try {

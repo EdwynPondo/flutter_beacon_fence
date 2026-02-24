@@ -16,10 +16,6 @@ public class BeaconFenceApiImpl: NSObject, FlutterBeaconFenceApi {
         FlutterBeaconFencePersistence.setCallbackDispatcherHandle(callbackDispatcherHandle)
     }
 
-    func reCreateAfterReboot() throws {
-        log.info("Re-create after reboot called. iOS handles this automatically, nothing for us to do here.")
-    }
-        
     func createBeacon(beacon: BeaconWire, completion: @escaping (Result<Void, any Error>) -> Void) {
         guard let beaconUUID = UUID(uuidString: beacon.uuid) else {
             log.error("Invalid UUID format: \(beacon.uuid)")

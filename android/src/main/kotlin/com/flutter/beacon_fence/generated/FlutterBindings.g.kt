@@ -521,7 +521,6 @@ private open class FlutterBindingsPigeonCodec : StandardMessageCodec() {
 interface FlutterBeaconFenceApi {
   fun initialize(callbackDispatcherHandle: Long)
   fun createBeacon(beacon: BeaconWire, callback: (Result<Unit>) -> Unit)
-  fun reCreateAfterReboot()
   fun getBeaconIds(): List<String>
   fun getBeacons(): List<ActiveBeaconWire>
   fun removeBeaconById(id: String, callback: (Result<Unit>) -> Unit)
@@ -569,22 +568,6 @@ interface FlutterBeaconFenceApi {
                 reply.reply(FlutterBindingsPigeonUtils.wrapResult(null))
               }
             }
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_beacon_fence.FlutterBeaconFenceApi.reCreateAfterReboot$separatedMessageChannelSuffix", codec)
-        if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            val wrapped: List<Any?> = try {
-              api.reCreateAfterReboot()
-              listOf(null)
-            } catch (exception: Throwable) {
-              FlutterBindingsPigeonUtils.wrapError(exception)
-            }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

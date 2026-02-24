@@ -40,7 +40,7 @@ class BeaconFenceApiImpl(
         Log.d(TAG, "Initialized consolidated BeaconFenceApi.")
     }
 
-    override fun reCreateAfterReboot() {
+    fun reCreateAfterReboot() {
         Log.d(TAG, "reCreateAfterReboot: Fetching persisted beacons...")
         val beacons = NativeBeaconPersistence.getAllBeacons(context)
         Log.d(TAG, "reCreateAfterReboot: Found ${beacons.size} beacons to re-create.")
