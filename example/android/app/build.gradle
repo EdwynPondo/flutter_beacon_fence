@@ -50,7 +50,7 @@ android {
 
     defaultConfig {
         applicationId "com.flutter.beacon_fence_example"
-        minSdkVersion 23
+        minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

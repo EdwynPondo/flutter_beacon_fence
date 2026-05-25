@@ -35,9 +35,7 @@ class AndroidBeaconSettings {
   /// created and NOT every time the plugin is initialized.
   final Set<BeaconEvent> initialTriggers;
 
-  const AndroidBeaconSettings({
-    required this.initialTriggers,
-  });
+  const AndroidBeaconSettings({required this.initialTriggers});
 
   @override
   String toString() {
@@ -227,10 +225,7 @@ class BeaconCallbackParams {
   /// The type of beacon event.
   final BeaconEvent event;
 
-  const BeaconCallbackParams({
-    required this.beacons,
-    required this.event,
-  });
+  const BeaconCallbackParams({required this.beacons, required this.event});
 
   @override
   String toString() {

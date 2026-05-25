@@ -12,9 +12,10 @@ class FlutterBeaconBackgroundManager {
   /// this anywhere else will throw an [AssertionError].
   static FlutterBeaconBackgroundManager get instance {
     assert(
-        _instance != null,
-        'FlutterBeaconBackgroundManager has not been initialized yet; '
-        'Are you running within a Beacon callback?');
+      _instance != null,
+      'FlutterBeaconBackgroundManager has not been initialized yet; '
+      'Are you running within a Beacon callback?',
+    );
     return _instance!;
   }
 
@@ -45,7 +46,8 @@ class FlutterBeaconBackgroundManager {
 /// Private method internal to plugin, do not use.
 Future<void> createFlutterBeaconBackgroundManagerInstance() async {
   final api = FlutterBeaconFenceBackgroundApi();
-  FlutterBeaconBackgroundManager._instance =
-      FlutterBeaconBackgroundManager._(api);
+  FlutterBeaconBackgroundManager._instance = FlutterBeaconBackgroundManager._(
+    api,
+  );
   await api.triggerApiInitialized();
 }

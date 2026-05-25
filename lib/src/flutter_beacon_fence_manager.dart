@@ -42,7 +42,8 @@ class FlutterBeaconFenceManager {
     }
     if (callback == null) {
       throw BeaconFenceException.internal(
-          message: 'Callback dispatcher is invalid.');
+        message: 'Callback dispatcher is invalid.',
+      );
     }
     return _api
         .initialize(callbackDispatcherHandle: callback.toRawHandle())
@@ -59,35 +60,44 @@ class FlutterBeaconFenceManager {
   Future<void> createBeacon(Beacon beacon, BeaconCallback callback) async {
     if (beacon.id.isEmpty) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Beacon ID cannot be empty.');
+        message: 'Beacon ID cannot be empty.',
+      );
     }
     if (beacon.triggers.isEmpty) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Beacon triggers cannot be empty.');
+        message: 'Beacon triggers cannot be empty.',
+      );
     }
     if (beacon.uuid.isEmpty) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Beacon UUID cannot be empty.');
+        message: 'Beacon UUID cannot be empty.',
+      );
     }
     // Validate UUID format (basic check)
     final uuidRegex = RegExp(
-        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
     if (!uuidRegex.hasMatch(beacon.uuid)) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Beacon UUID format is invalid. Expected format: '
-              'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX');
+        message:
+            'Beacon UUID format is invalid. Expected format: '
+            'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
+      );
     }
     if (beacon.major != null && (beacon.major! < 0 || beacon.major! > 65535)) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Beacon major value must be between 0 and 65535.');
+        message: 'Beacon major value must be between 0 and 65535.',
+      );
     }
     if (beacon.minor != null && (beacon.minor! < 0 || beacon.minor! > 65535)) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Beacon minor value must be between 0 and 65535.');
+        message: 'Beacon minor value must be between 0 and 65535.',
+      );
     }
     if (beacon.minor != null && beacon.major == null) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Beacon minor value requires major value to be set.');
+        message: 'Beacon minor value requires major value to be set.',
+      );
     }
     final CallbackHandle? callbackHandle;
     try {
@@ -97,7 +107,8 @@ class FlutterBeaconFenceManager {
     }
     if (callbackHandle == null) {
       throw BeaconFenceException.invalidArgument(
-          message: 'Callback is invalid.');
+        message: 'Callback is invalid.',
+      );
     }
     return _api
         .createBeacon(beacon: beacon.toWire(callbackHandle.toRawHandle()))
@@ -148,18 +159,16 @@ class FlutterBeaconFenceManager {
   /// If there are no beacons registered, this method does nothing.
   ///
   /// Throws [BeaconFenceException].
-  Future<void> removeAllBeacons() async => _api
-      .removeAllBeacons()
-      .catchError(BeaconFenceExceptionMapper.catchError<void>);
+  Future<void> removeAllBeacons() async => _api.removeAllBeacons().catchError(
+    BeaconFenceExceptionMapper.catchError<void>,
+  );
 
   /// Configure Android beacon scanner settings.
   ///
   /// This method is only available on Android. On iOS it does nothing.
   ///
   /// Throws [BeaconFenceException].
-  Future<void> configureAndroidMonitor(
-    AndroidScannerSettings settings,
-  ) async =>
+  Future<void> configureAndroidMonitor(AndroidScannerSettings settings) async =>
       _api
           .configureAndroidMonitor(settings: settings.toWire())
           .catchError(BeaconFenceExceptionMapper.catchError<void>);

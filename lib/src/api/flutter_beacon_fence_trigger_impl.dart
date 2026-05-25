@@ -20,15 +20,17 @@ class FlutterBeaconFenceTriggerImpl implements FlutterBeaconFenceTriggerApi {
   @override
   Future<void> beaconTriggered(BeaconCallbackParamsWire params) async {
     final Function? callback = PluginUtilities.getCallbackFromHandle(
-        CallbackHandle.fromRawHandle(params.callbackHandle));
+      CallbackHandle.fromRawHandle(params.callbackHandle),
+    );
     if (callback == null) {
       throw BeaconFenceException(code: BeaconFenceErrorCode.callbackNotFound);
     }
     if (callback is! BeaconCallback) {
       throw BeaconFenceException(
-          code: BeaconFenceErrorCode.callbackInvalid,
-          message: 'Invalid callback type: ${callback.runtimeType.toString()}',
-          details: 'Expected: BeaconCallback');
+        code: BeaconFenceErrorCode.callbackInvalid,
+        message: 'Invalid callback type: ${callback.runtimeType.toString()}',
+        details: 'Expected: BeaconCallback',
+      );
     }
     await callback(params.fromWire());
     debugPrint('Beacon trigger callback completed.');
