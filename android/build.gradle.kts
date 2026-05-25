@@ -1,4 +1,5 @@
 import com.android.build.gradle.LibraryExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 group = "com.flutter.beacon_fence"
 version = "1.0-SNAPSHOT"
@@ -15,7 +16,7 @@ kotlin {
 }
 
 buildscript {
-    val kotlinVersion = "2.2.0"
+    val kotlin_version = "2.2.20"
     repositories {
         google()
         mavenCentral()
@@ -60,11 +61,11 @@ android {
 
     testOptions {
         unitTests.all {
-            useJUnitPlatform()
+            it.useJUnitPlatform()
 
-            testLogging {
+            it.testLogging {
                 events("passed", "skipped", "failed", "standardOut", "standardError")
-                outputs.upToDateWhen { false }
+                it.outputs.upToDateWhen { false }
                 showStandardStreams = true
             }
         }
