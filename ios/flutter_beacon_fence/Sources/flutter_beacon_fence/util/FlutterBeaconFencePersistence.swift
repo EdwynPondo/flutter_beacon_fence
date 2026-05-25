@@ -1,3 +1,5 @@
+import Foundation
+
 class FlutterBeaconFencePersistence {
     private static let persistentState: UserDefaults = .standard
     

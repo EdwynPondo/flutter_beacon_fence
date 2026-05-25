@@ -7,7 +7,8 @@ import 'package:pigeon/pigeon.dart';
   PigeonOptions(
     dartOut: 'lib/src/generated/platform_bindings.g.dart',
     dartPackageName: 'flutter_beacon_fence',
-    swiftOut: 'ios/Classes/Generated/FlutterBindings.g.swift',
+    swiftOut:
+        'ios/flutter_beacon_fence/Sources/flutter_beacon_fence/Generated/FlutterBindings.g.swift',
     kotlinOut:
         'android/src/main/kotlin/com/flutter/beacon_fence/generated/FlutterBindings.g.kt',
     kotlinOptions: KotlinOptions(package: 'com.flutter.beacon_fence.generated'),
