@@ -13,7 +13,7 @@ Battery efficient Flutter Beacon fencing that uses native iOS and Android APIs.
   s.license          = { :file => '../LICENSE', :type => 'MIT' }
   s.author           = { 'Edwin Zambrano Nemegyei' => 'edwinzn9@gmail.com' }
   s.source           = { :path => '.', :git => 'https://github.com/EdwynPondo/flutter_beacon_fence.git' }
-  s.source_files = 'flutter_beacon_fence/Sources/flutter_beacon_fence/**/*.{h,m}'
+  s.source_files = 'flutter_beacon_fence/Sources/flutter_beacon_fence/**/*.swift'
   s.dependency 'Flutter'
   s.platform = :ios, '14.0'
 
