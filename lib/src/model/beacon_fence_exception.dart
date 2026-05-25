@@ -14,19 +14,18 @@ class BeaconFenceException implements Exception {
     this.stacktrace,
   });
 
-  BeaconFenceException.internal({
-    required String this.message,
-    this.details,
-  })  : code = BeaconFenceErrorCode.pluginInternal,
-        stacktrace = StackTrace.current.toString();
+  BeaconFenceException.internal({required String this.message, this.details})
+    : code = BeaconFenceErrorCode.pluginInternal,
+      stacktrace = StackTrace.current.toString();
 
   BeaconFenceException.invalidArgument({
     required String this.message,
     this.details,
-  })  : code = BeaconFenceErrorCode.invalidArguments,
-        stacktrace = StackTrace.current.toString();
+  }) : code = BeaconFenceErrorCode.invalidArguments,
+       stacktrace = StackTrace.current.toString();
 
   @override
-  String toString() => 'BeaconFenceException(${code.name}, message=$message, '
+  String toString() =>
+      'BeaconFenceException(${code.name}, message=$message, '
       'details=$details, stacktrace=$stacktrace)';
 }

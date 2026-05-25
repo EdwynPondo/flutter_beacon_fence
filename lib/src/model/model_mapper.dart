@@ -17,8 +17,10 @@ extension BeaconFenceExceptionMapper on BeaconFenceException {
     );
   }
 
-  static BeaconFenceException fromException(Exception ex,
-      [StackTrace? stacktrace]) {
+  static BeaconFenceException fromException(
+    Exception ex, [
+    StackTrace? stacktrace,
+  ]) {
     return BeaconFenceException(
       code: BeaconFenceErrorCode.unknown,
       message: ex.toString(),
@@ -26,8 +28,10 @@ extension BeaconFenceExceptionMapper on BeaconFenceException {
     );
   }
 
-  static BeaconFenceException fromError(dynamic error,
-      [StackTrace? stacktrace]) {
+  static BeaconFenceException fromError(
+    dynamic error, [
+    StackTrace? stacktrace,
+  ]) {
     if (error is BeaconFenceException) {
       return error;
     }
@@ -69,17 +73,13 @@ extension IosBeaconSettingsWireMapper on IosBeaconSettingsWire {
 
 extension AndroidBeaconSettingsMapper on AndroidBeaconSettings {
   AndroidBeaconSettingsWire toWire() {
-    return AndroidBeaconSettingsWire(
-      initialTriggers: initialTriggers.toList(),
-    );
+    return AndroidBeaconSettingsWire(initialTriggers: initialTriggers.toList());
   }
 }
 
 extension AndroidBeaconSettingsWireMapper on AndroidBeaconSettingsWire {
   AndroidBeaconSettings fromWire() {
-    return AndroidBeaconSettings(
-      initialTriggers: initialTriggers.toSet(),
-    );
+    return AndroidBeaconSettings(initialTriggers: initialTriggers.toSet());
   }
 }
 

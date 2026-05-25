@@ -3,20 +3,18 @@ import 'package:pigeon/pigeon.dart';
 // After modifying this file run:
 // dart run pigeon --input pigeons/beacon_fence_api.dart && dart format .
 
-@ConfigurePigeon(PigeonOptions(
-  dartOut: 'lib/src/generated/platform_bindings.g.dart',
-  dartPackageName: 'flutter_beacon_fence',
-  swiftOut: 'ios/Classes/Generated/FlutterBindings.g.swift',
-  kotlinOut:
-      'android/src/main/kotlin/com/flutter/beacon_fence/generated/FlutterBindings.g.kt',
-  kotlinOptions: KotlinOptions(package: 'com.flutter.beacon_fence.generated'),
-))
-
+@ConfigurePigeon(
+  PigeonOptions(
+    dartOut: 'lib/src/generated/platform_bindings.g.dart',
+    dartPackageName: 'flutter_beacon_fence',
+    swiftOut: 'ios/Classes/Generated/FlutterBindings.g.swift',
+    kotlinOut:
+        'android/src/main/kotlin/com/flutter/beacon_fence/generated/FlutterBindings.g.kt',
+    kotlinOptions: KotlinOptions(package: 'com.flutter.beacon_fence.generated'),
+  ),
+)
 /// Bluetooth beacon events.
-enum BeaconEvent {
-  enter(),
-  exit();
-}
+enum BeaconEvent { enter(), exit() }
 
 enum BeaconFenceErrorCode {
   unknown,
@@ -89,9 +87,7 @@ class IosBeaconSettingsWire {
 class AndroidBeaconSettingsWire {
   final List<BeaconEvent> initialTriggers;
 
-  const AndroidBeaconSettingsWire({
-    required this.initialTriggers,
-  });
+  const AndroidBeaconSettingsWire({required this.initialTriggers});
 }
 
 class AndroidNotificationsSettingsWire {
