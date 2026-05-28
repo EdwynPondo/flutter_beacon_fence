@@ -16,6 +16,15 @@ class MyApp extends StatefulWidget {
   MyAppState createState() => MyAppState();
 }
 
+@pragma('vm:entry-point')
+Future<void> beaconEnterTriggered(BeaconCallbackParams params) async {
+  debugPrint('Beacon enter triggered: ${params.event}');
+  final SendPort? sendPort =
+      IsolateNameServer.lookupPortByName('flutter_beacon_fence_send_port');
+  sendPort
+      ?.send('Entered beacon: ${params.beacons.map((e) => e.id).join(', ')}');
+}
+
 class MyAppState extends State<MyApp> {
   String beaconfenceState = 'N/A';
   ReceivePort port = ReceivePort();
@@ -40,6 +49,24 @@ class MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     debugPrint('Initializing...');
     await FlutterBeaconFenceManager.instance.initialize();
+    await FlutterBeaconFenceManager.instance.configureAndroidMonitor(
+      const AndroidScannerSettings(
+        notificationSettings:
+            AndroidNotificationSettings(title: 'title', content: 'content'),
+      ),
+    );
+    await FlutterBeaconFenceManager.instance.removeAllBeacons();
+    await FlutterBeaconFenceManager.instance.createBeacon(
+      Beacon(
+        id: 'pondo_beacon_session',
+        uuid: '39ED98FF-2900-441A-802F-9C398FC199D2',
+        triggers: {BeaconEvent.enter},
+        iosSettings: IosBeaconSettings(initialTrigger: true),
+        androidSettings:
+            AndroidBeaconSettings(initialTriggers: {BeaconEvent.enter}),
+      ),
+      beaconEnterTriggered,
+    );
     debugPrint('Initialization done');
   }
 
