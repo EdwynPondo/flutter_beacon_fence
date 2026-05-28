@@ -49,17 +49,18 @@ class MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     debugPrint('Initializing...');
     await FlutterBeaconFenceManager.instance.initialize();
+    await FlutterBeaconFenceManager.instance.removeAllBeacons();
     await FlutterBeaconFenceManager.instance.configureAndroidMonitor(
       const AndroidScannerSettings(
+        useForegroundService: true,
         notificationSettings:
             AndroidNotificationSettings(title: 'title', content: 'content'),
       ),
     );
-    await FlutterBeaconFenceManager.instance.removeAllBeacons();
     await FlutterBeaconFenceManager.instance.createBeacon(
       Beacon(
         id: 'pondo_beacon_session',
-        uuid: '39ED98FF-2900-441A-802F-9C398FC199D2',
+        uuid: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0',
         triggers: {BeaconEvent.enter},
         iosSettings: IosBeaconSettings(initialTrigger: true),
         androidSettings:
