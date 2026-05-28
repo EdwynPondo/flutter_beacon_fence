@@ -1,19 +1,5 @@
-import com.android.build.gradle.LibraryExtension
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 group = "com.flutter.beacon_fence"
 version = "1.0-SNAPSHOT"
-
-plugins {
-    id("com.android.library")
-    id("kotlin-android")
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.fromTarget("21")
-    }
-}
 
 buildscript {
     val kotlin_version = "2.2.20"
@@ -36,6 +22,16 @@ allprojects {
     }
 }
 
+plugins {
+    id("com.android.library")
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    }
+}
+
 android {
     namespace = "com.flutter.beacon_fence"
     compileSdk = flutter.compileSdkVersion
@@ -51,12 +47,7 @@ android {
     }
 
     defaultConfig {
-        minSdk = 23
-    }
-
-    dependencies {
-        testImplementation("org.jetbrains.kotlin:kotlin-test")
-        testImplementation("org.mockito:mockito-core:5.18.0")
+        minSdk = 24
     }
 
     testOptions {
@@ -73,6 +64,8 @@ android {
 }
 
 dependencies {
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.mockito:mockito-core:5.18.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-maps:19.2.0")
     implementation("com.google.guava:guava:33.4.8-android")
