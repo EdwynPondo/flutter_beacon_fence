@@ -1,38 +1,23 @@
-import com.android.build.gradle.LibraryExtension
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 group = "com.flutter.beacon_fence"
 version = "1.0-SNAPSHOT"
-
-plugins {
-    id("com.android.library")
-    id("kotlin-android")
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.fromTarget("21")
-    }
-}
-
-buildscript {
-    val kotlin_version = "2.2.20"
-    repositories {
-        google()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.13.2")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
-        classpath("org.jetbrains.kotlin:kotlin-serialization:$kotlin_version")
-    }
-}
 
 allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+plugins {
+    id("com.android.library")
+    id("com.android.application") version "8.13.2" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
     }
 }
 
@@ -51,12 +36,7 @@ android {
     }
 
     defaultConfig {
-        minSdk = 23
-    }
-
-    dependencies {
-        testImplementation("org.jetbrains.kotlin:kotlin-test")
-        testImplementation("org.mockito:mockito-core:5.18.0")
+        minSdk = 24
     }
 
     testOptions {
@@ -73,8 +53,9 @@ android {
 }
 
 dependencies {
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.mockito:mockito-core:5.18.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
-    implementation("com.google.android.gms:play-services-maps:19.2.0")
     implementation("com.google.guava:guava:33.4.8-android")
     implementation("androidx.work:work-runtime-ktx:2.10.2")
     implementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
