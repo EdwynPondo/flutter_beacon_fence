@@ -1,6 +1,18 @@
 group = "com.flutter.beacon_fence"
 version = "1.0-SNAPSHOT"
 
+buildscript {
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.13.2")
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -10,8 +22,7 @@ allprojects {
 
 plugins {
     id("com.android.library")
-    id("com.android.application") version "8.13.2" apply false
-    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.20"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
 }
 
