@@ -21,6 +21,7 @@ import androidx.core.content.edit
 import com.flutter.beacon_fence.generated.BeaconFenceErrorCode
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceApi
 import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
+import com.flutter.beacon_fence.services.BeaconWatchdogService
 
 class BeaconFenceApiImpl(
     private val context: Context,
@@ -40,15 +41,15 @@ class BeaconFenceApiImpl(
         Log.d(TAG, "Initialized consolidated BeaconFenceApi.")
     }
 
-    fun reCreateAfterReboot() {
-        Log.d(TAG, "reCreateAfterReboot: Fetching persisted beacons...")
+    fun restorePersistedBeacons() {
+        Log.d(TAG, "restoreAfterReboot: Fetching persisted beacons...")
         val beacons = NativeBeaconPersistence.getAllBeacons(context)
-        Log.d(TAG, "reCreateAfterReboot: Found ${beacons.size} beacons to re-create.")
+        Log.d(TAG, "restoreAfterReboot: Found ${beacons.size} beacons to re-create.")
         for (beacon in beacons) {
             createBeaconHelper(beacon, false, null)
         }
 
-        Log.d(TAG, "reCreateAfterReboot: ${beacons.size} beacons processing complete.")
+        Log.d(TAG, "restoreAfterReboot: ${beacons.size} beacons processing complete.")
     }
 
     override fun createBeacon(
@@ -83,6 +84,7 @@ class BeaconFenceApiImpl(
             beaconManager.stopRangingBeacons(region)
             
             NativeBeaconPersistence.removeBeacon(context, id)
+            BeaconWatchdogService(context).updateWatchdogState()
             Log.d(TAG, "Removed Beacon ID=$id.")
             callback.invoke(Result.success(Unit))
         } catch (e: Exception) {
@@ -99,6 +101,7 @@ class BeaconFenceApiImpl(
                 beaconManager.stopRangingBeacons(region)
             }
             NativeBeaconPersistence.removeAllBeacons(context)
+            BeaconWatchdogService(context).updateWatchdogState()
             Log.d(TAG, "Removed all beacons.")
             callback.invoke(Result.success(Unit))
         } catch (e: Exception) {
@@ -144,6 +147,7 @@ class BeaconFenceApiImpl(
                     "UseForegroundService=${settings.useForegroundService}")
             
             NativeBeaconPersistence.saveScannerSettings(context, settings)
+            BeaconWatchdogService(context).updateWatchdogState()
             
             callback.invoke(Result.success(Unit))
         } catch (e: Exception) {
@@ -180,6 +184,7 @@ class BeaconFenceApiImpl(
             if (cache) {
                 NativeBeaconPersistence.saveBeacon(context, beacon)
             }
+            BeaconWatchdogService(context).updateWatchdogState()
             
             Log.d(TAG, "createBeaconHelper: Successfully started monitoring Beacon ID=${beacon.id}.")
             callback?.invoke(Result.success(Unit))
