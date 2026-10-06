@@ -1,14 +1,11 @@
 package com.flutter.beacon_fence.services
 
 import android.content.Context
-import android.os.Build
 import android.util.Log
 import com.flutter.beacon_fence.Constants
 import com.flutter.beacon_fence.api.BeaconFenceApiImpl
-import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
 import com.flutter.beacon_fence.util.BeaconNotifier
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
-import com.flutter.beacon_fence.util.Notifications
 import org.altbeacon.beacon.BeaconManager
 
 class BeaconScannerService(
@@ -25,15 +22,14 @@ class BeaconScannerService(
 
         // Initialize BeaconNotifier
         val beaconNotifier = BeaconNotifier(context)
-        
-        // Restore scanner settings if available
-        val initialScannerSettings = NativeBeaconPersistence.getScannerSettings(context)
 
         // Configure BeaconManager once
         beaconManager.apply {
-            // Support iBeacon
+            // Only parse iBeacon. Every extra parser widens the hardware scan filters,
+            // waking the CPU for advertisements no region can match.
             beaconParsers.apply {
-                if (!contains(Constants.IBEACON_PARSER)) {
+                if (size != 1 || !contains(Constants.IBEACON_PARSER)) {
+                    clear()
                     add(Constants.IBEACON_PARSER)
                 }
             }
@@ -44,37 +40,17 @@ class BeaconScannerService(
             // Register BeaconNotifier as a range notifier to receive RSSI events
             removeAllRangeNotifiers()
             addRangeNotifier(beaconNotifier)
+        }
 
-            if (initialScannerSettings != null) {
-                foregroundScanPeriod = initialScannerSettings.foregroundScanPeriodMillis
-                foregroundBetweenScanPeriod = initialScannerSettings.foregroundBetweenScanPeriodMillis
-                backgroundScanPeriod = initialScannerSettings.backgroundScanPeriodMillis
-                backgroundBetweenScanPeriod = initialScannerSettings.backgroundBetweenScanPeriodMillis
-
-                try {
-                    updateScanPeriods()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to updateScanPeriods during reactivateScanning: $e")
-                }
-
-                if (!isAnyConsumerBound &&
-                    initialScannerSettings.useForegroundService &&
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                ) {
-                    try {
-                        val notificationSettings = initialScannerSettings.notificationsSettings
-                            ?: AndroidNotificationSettingStore.DEFAULT_WIRE
-                        val notification = Notifications.createForegroundServiceNotification(
-                            context,
-                            notificationSettings.title,
-                            notificationSettings.content
-                        )
-                        enableForegroundServiceScanning(notification, Constants.NOTIFICATION_ID)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to enableForegroundServiceScanning during reactivateScanning: $e")
-                    }
-                }
-                Log.d(TAG, "Restored Android scan periods from storage.")
+        // Restore scanner settings, falling back to the defaults when beacons exist but no
+        // settings were ever configured.
+        val hasBeacons = NativeBeaconPersistence.getAllBeaconIds(context).isNotEmpty()
+        if (hasBeacons || NativeBeaconPersistence.getScannerSettings(context) != null) {
+            val applier = ScanSettingsApplier(context, beaconManager)
+            try {
+                applier.apply(applier.persistedOrDefault())
+            } catch (e: Throwable) {
+                Log.e(TAG, "Failed to apply scanner settings during reactivateScanning: $e")
             }
         }
 

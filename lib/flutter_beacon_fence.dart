@@ -3,7 +3,7 @@ export 'package:flutter_beacon_fence/src/flutter_beacon_fence_background_manager
 export 'package:flutter_beacon_fence/src/flutter_beacon_fence_manager.dart'
     show FlutterBeaconFenceManager;
 export 'package:flutter_beacon_fence/src/generated/platform_bindings.g.dart'
-    show BeaconEvent;
+    show AndroidScanStrategy, BeaconEvent;
 export 'package:flutter_beacon_fence/src/model/beacon_fence_exception.dart';
 export 'package:flutter_beacon_fence/src/model/beacon_models.dart';
 export 'package:flutter_beacon_fence/src/typedefs.dart';

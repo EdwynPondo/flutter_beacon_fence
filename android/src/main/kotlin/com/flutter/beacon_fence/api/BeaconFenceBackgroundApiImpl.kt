@@ -1,16 +1,12 @@
 package com.flutter.beacon_fence.api
 
 import android.content.Context
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import com.flutter.beacon_fence.FlutterBeaconFenceBackgroundWorker
 import com.flutter.beacon_fence.generated.AndroidNotificationsSettingsWire
-import com.flutter.beacon_fence.generated.AndroidScannerSettingsWire
+import com.flutter.beacon_fence.generated.AndroidScanStrategy
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceBackgroundApi
-import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
-import com.flutter.beacon_fence.util.NativeBeaconPersistence
-import com.flutter.beacon_fence.util.Notifications
+import com.flutter.beacon_fence.services.ScanSettingsApplier
 import org.altbeacon.beacon.BeaconManager
 
 class BeaconFenceBackgroundApiImpl(
@@ -26,48 +22,21 @@ class BeaconFenceBackgroundApiImpl(
         worker.triggerApiReady()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun promoteToForeground(settings: AndroidNotificationsSettingsWire?) {
-        val beaconManager = BeaconManager.getInstanceForApplication(context)
-        val settings = androidScannerSettingsWire(beaconManager, useForeground = true, settings)
-        val notificationSettings = settings.notificationsSettings
-            ?: AndroidNotificationSettingStore.DEFAULT_WIRE
-        val notification = Notifications.createForegroundServiceNotification(
-            context,
-            notificationSettings.title,
-            notificationSettings.content
-        )
-        beaconManager.enableForegroundServiceScanning(notification, 938131)
-        NativeBeaconPersistence.saveScannerSettings(context, settings)
-        Log.d(TAG, "Promoted background service to foreground service.")
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    override fun demoteToBackground() {
-        val beaconManager = BeaconManager.getInstanceForApplication(context)
-        val settings = androidScannerSettingsWire(beaconManager, false)
-        BeaconManager.getInstanceForApplication(context).disableForegroundServiceScanning()
-        NativeBeaconPersistence.saveScannerSettings(context, settings)
-        Log.d(TAG, "Demoted foreground service back to background service.")
-    }
-
-    private fun androidScannerSettingsWire(
-        beaconManager: BeaconManager,
-        useForeground: Boolean,
-        notificationSettings: AndroidNotificationsSettingsWire? = null,
-    ): AndroidScannerSettingsWire {
-        val settings = NativeBeaconPersistence
-            .getScannerSettings(context)
-            ?: AndroidScannerSettingsWire(
-                beaconManager.foregroundScanPeriod,
-                beaconManager.foregroundBetweenScanPeriod,
-                beaconManager.backgroundScanPeriod,
-                beaconManager.backgroundBetweenScanPeriod,
-                useForeground,
+        val applier = ScanSettingsApplier(context, BeaconManager.getInstanceForApplication(context))
+        val current = applier.persistedOrDefault()
+        applier.apply(
+            current.copy(
+                scanStrategy = AndroidScanStrategy.FOREGROUND_SERVICE,
+                notificationsSettings = settings ?: current.notificationsSettings
             )
-        return settings.copy(
-            useForegroundService = useForeground,
-            notificationsSettings = notificationSettings ?: settings.notificationsSettings
         )
+        Log.d(TAG, "Promoted scanning to the foreground service strategy.")
+    }
+
+    override fun demoteToBackground() {
+        val applier = ScanSettingsApplier(context, BeaconManager.getInstanceForApplication(context))
+        applier.apply(applier.persistedOrDefault().copy(scanStrategy = AndroidScanStrategy.JOB_SCHEDULER))
+        Log.d(TAG, "Demoted scanning to the job scheduler strategy.")
     }
 }

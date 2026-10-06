@@ -73,6 +73,28 @@ enum BeaconFenceErrorCode {
   /// The beacon deletion failed because the beacon was not found.
   /// This is safe to ignore.
   beaconNotFound,
+
+  /// The Android foreground service scan strategy was requested but the host
+  /// app manifest does not declare `android.permission.FOREGROUND_SERVICE`.
+  ///
+  /// Add it to your `AndroidManifest.xml` or choose another
+  /// [AndroidScanStrategy].
+  missingForegroundServicePermission,
+}
+
+/// How Android keeps beacon scanning running.
+enum AndroidScanStrategy {
+  /// A foreground service with a persistent notification. Fastest and most
+  /// reliable detection (~1s enter, ~30s exit) at the highest battery cost.
+  foregroundService,
+
+  /// OS scheduled jobs. Lowest battery cost; Android 8+ limits background
+  /// scans to roughly every 15 minutes.
+  jobScheduler,
+
+  /// OS delivered scan intents. Fast enter detection without a notification,
+  /// but slow exit detection. Falls back to [jobScheduler] below Android 8.
+  intent,
 }
 
 class IosBeaconSettingsWire {
@@ -106,7 +128,8 @@ class AndroidScannerSettingsWire {
   final int foregroundBetweenScanPeriodMillis;
   final int backgroundScanPeriodMillis;
   final int backgroundBetweenScanPeriodMillis;
-  final bool useForegroundService;
+  final AndroidScanStrategy scanStrategy;
+  final int regionExitPeriodMillis;
   final AndroidNotificationsSettingsWire? notificationsSettings;
 
   const AndroidScannerSettingsWire({
@@ -114,7 +137,8 @@ class AndroidScannerSettingsWire {
     required this.foregroundBetweenScanPeriodMillis,
     required this.backgroundScanPeriodMillis,
     required this.backgroundBetweenScanPeriodMillis,
-    required this.useForegroundService,
+    required this.scanStrategy,
+    required this.regionExitPeriodMillis,
     this.notificationsSettings,
   });
 }

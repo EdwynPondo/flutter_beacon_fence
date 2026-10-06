@@ -74,11 +74,28 @@ class AndroidScannerSettings {
   final Duration backgroundScanPeriod;
 
   /// The duration to wait between beacon scans when the app is in the background.
+  ///
+  /// Values of 6 seconds or less keep scanning continuously at full power
+  /// (Android limits how often scans can be restarted). Longer values use a
+  /// low power scan between cycles, which saves battery but can miss short
+  /// lived beacon advertisements.
   final Duration backgroundBetweenScanPeriod;
 
+  /// How Android keeps scanning running. Defaults to
+  /// [AndroidScanStrategy.foregroundService], which shows a persistent
+  /// notification. Use [AndroidScanStrategy.jobScheduler] or
+  /// [AndroidScanStrategy.intent] to opt out of the foreground service.
+  final AndroidScanStrategy scanStrategy;
+
+  /// How long a beacon must go unseen before an exit event fires.
+  final Duration regionExitPeriod;
+
   /// Whether to use a foreground service for scanning in the background.
-  /// This ensures reliable scanning on modern Android versions.
-  final bool useForegroundService;
+  @Deprecated('Use scanStrategy instead.')
+  final bool? useForegroundService;
+
+  /// The persistent notification shown by the
+  /// [AndroidScanStrategy.foregroundService] scan strategy.
   final AndroidNotificationSettings? notificationSettings;
 
   const AndroidScannerSettings({
@@ -86,9 +103,15 @@ class AndroidScannerSettings {
     this.foregroundBetweenScanPeriod = const Duration(seconds: 0),
     this.backgroundScanPeriod = const Duration(milliseconds: 1100),
     this.backgroundBetweenScanPeriod = const Duration(seconds: 0),
-    this.useForegroundService = false,
+    AndroidScanStrategy? scanStrategy,
+    this.regionExitPeriod = const Duration(seconds: 10),
+    @Deprecated('Use scanStrategy instead.') this.useForegroundService,
     this.notificationSettings,
-  });
+  }) : scanStrategy =
+           scanStrategy ??
+           (useForegroundService == false
+               ? AndroidScanStrategy.jobScheduler
+               : AndroidScanStrategy.foregroundService);
 
   @override
   String toString() {
@@ -97,8 +120,9 @@ class AndroidScannerSettings {
         'foregroundBetweenScanPeriod: ${foregroundBetweenScanPeriod.inMilliseconds}ms, '
         'backgroundScanPeriod: ${backgroundScanPeriod.inMilliseconds}ms, '
         'backgroundBetweenScanPeriod: ${backgroundBetweenScanPeriod.inMilliseconds}ms, '
-        'useForegroundService: $useForegroundService, )'
-        'notificationSettings: $notificationSettings';
+        'scanStrategy: ${scanStrategy.name}, '
+        'regionExitPeriod: ${regionExitPeriod.inMilliseconds}ms, '
+        'notificationSettings: $notificationSettings)';
   }
 }
 
