@@ -10,10 +10,10 @@ import com.flutter.beacon_fence.Constants
 import com.flutter.beacon_fence.generated.ActiveBeaconWire
 import com.flutter.beacon_fence.generated.AndroidScannerSettingsWire
 import com.flutter.beacon_fence.generated.BeaconWire
-import com.flutter.beacon_fence.generated.FlutterError
 import com.flutter.beacon_fence.util.ActiveBeaconWires
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
 import com.flutter.beacon_fence.util.Notifications
+import com.flutter.beacon_fence.util.toFlutterError
 import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.Region
 import org.altbeacon.beacon.Identifier
@@ -75,7 +75,7 @@ class BeaconFenceApiImpl(
             val beaconToRemove = allBeacons.find { it.id == id }
             
             if (beaconToRemove == null) {
-                callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.BEACON_NOT_FOUND.raw.toString(), "Beacon not found")))
+                callback.invoke(Result.failure(BeaconFenceErrorCode.BEACON_NOT_FOUND.toFlutterError("Beacon not found")))
                 return
             }
 
@@ -88,7 +88,8 @@ class BeaconFenceApiImpl(
             Log.d(TAG, "Removed Beacon ID=$id.")
             callback.invoke(Result.success(Unit))
         } catch (e: Exception) {
-            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.raw.toString(), e.toString())))
+            Log.e(TAG, "removeBeaconById: Failed to remove Beacon ID=$id: $e")
+            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
         }
     }
 
@@ -105,7 +106,8 @@ class BeaconFenceApiImpl(
             Log.d(TAG, "Removed all beacons.")
             callback.invoke(Result.success(Unit))
         } catch (e: Exception) {
-            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.raw.toString(), e.toString())))
+            Log.e(TAG, "removeAllBeacons: Failed to remove beacons: $e")
+            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
         }
     }
 
@@ -151,7 +153,8 @@ class BeaconFenceApiImpl(
             
             callback.invoke(Result.success(Unit))
         } catch (e: Exception) {
-            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.raw.toString(), e.toString())))
+            Log.e(TAG, "configureAndroidMonitor: Failed to configure monitor: $e")
+            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
         }
     }
 
@@ -169,9 +172,9 @@ class BeaconFenceApiImpl(
                 // and BLUETOOTH_SCAN on 31+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                      if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                         Log.e(TAG, "createBeaconHelper: Missing BLUETOOTH_SCAN permission for Beacon ID=${beacon.id}")
-                         callback?.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.MISSING_BLUETOOTH_PERMISSION.raw.toString(), "Missing BLUETOOTH_SCAN permission")))
-                         return
+                        Log.e(TAG, "createBeaconHelper: Missing BLUETOOTH_SCAN permission for Beacon ID=${beacon.id}")
+                        callback?.invoke(Result.failure(BeaconFenceErrorCode.MISSING_BLUETOOTH_PERMISSION.toFlutterError("Missing BLUETOOTH_SCAN permission")))
+                        return
                      }
                 }
             }
@@ -190,7 +193,7 @@ class BeaconFenceApiImpl(
             callback?.invoke(Result.success(Unit))
         } catch (e: Exception) {
             Log.e(TAG, "createBeaconHelper: Failed to start monitoring Beacon ID=${beacon.id}: $e")
-            callback?.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.raw.toString(), e.toString())))
+            callback?.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
         }
     }
 
@@ -200,11 +203,21 @@ class BeaconFenceApiImpl(
         // uuid major minor are nullable in BeaconWire?
         // In iBeacon: Region(id, uuid, major, minor)
         // If major is null, it's a wildcard.
-        return Region(
-            beacon.id,
-            Identifier.parse(beacon.uuid),
-            beacon.major?.let { Identifier.fromInt(it.toInt()) },
-            beacon.minor?.let { Identifier.fromInt(it.toInt()) }
-        )
+        val uuid = try {
+            Identifier.parse(beacon.uuid)
+        } catch (e: IllegalArgumentException) {
+            throw BeaconFenceErrorCode.INVALID_ARGUMENTS.toFlutterError("Invalid UUID format: ${beacon.uuid}")
+        }
+        val major = beacon.major?.let { parseBeaconInt(it, "major") }
+        val minor = beacon.minor?.let { parseBeaconInt(it, "minor") }
+        return Region(beacon.id, uuid, major, minor)
+    }
+
+    private fun parseBeaconInt(value: Long, name: String): Identifier {
+        return try {
+            Identifier.fromInt(value.toInt())
+        } catch (e: IllegalArgumentException) {
+            throw BeaconFenceErrorCode.INVALID_ARGUMENTS.toFlutterError("Invalid $name value: $value")
+        }
     }
 }

@@ -19,7 +19,7 @@ public class BeaconFenceApiImpl: NSObject, FlutterBeaconFenceApi {
     func createBeacon(beacon: BeaconWire, completion: @escaping (Result<Void, any Error>) -> Void) {
         guard let beaconUUID = UUID(uuidString: beacon.uuid) else {
             log.error("Invalid UUID format: \(beacon.uuid)")
-            completion(.failure(NSError(domain: "FlutterBeaconFenceApi", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid UUID format"])))
+            completion(.failure(BeaconFenceErrorCode.invalidArguments.toPigeonError("Invalid UUID format: \(beacon.uuid)")))
             return
         }
         
@@ -91,6 +91,11 @@ public class BeaconFenceApiImpl: NSObject, FlutterBeaconFenceApi {
                 FlutterBeaconFencePersistence.removeRegionCallbackHandle(id: region.identifier)
                 removedCount += 1
             }
+        }
+        if removedCount == 0 {
+            log.debug("No beacon found with ID=\(id).")
+            completion(.failure(BeaconFenceErrorCode.beaconNotFound.toPigeonError("Beacon not found")))
+            return
         }
         log.debug("Removed \(removedCount) beacon(s) with ID=\(id).")
         completion(.success(()))

@@ -136,20 +136,15 @@ class FlutterBeaconFenceManager {
 
   /// Stop receiving beacon events for a given [Beacon].
   ///
-  /// If the [Beacon] is not registered, this method does nothing.
-  ///
-  /// Throws [BeaconFenceException]. Might throw
-  /// [BeaconFenceErrorCode.beaconNotFound] on Android.
+  /// Throws [BeaconFenceException] with [BeaconFenceErrorCode.beaconNotFound]
+  /// if the [Beacon] is not registered.
   Future<void> removeBeacon(Beacon beacon) async => removeBeaconById(beacon.id);
 
   /// Stop receiving beacon events for an identifier associated with a
   /// beacon region.
   ///
-  /// If a [Beacon] with the given ID is not registered, this method does
-  /// nothing.
-  ///
-  /// Throws [BeaconFenceException]. Might throw
-  /// [BeaconFenceErrorCode.beaconNotFound] on Android.
+  /// Throws [BeaconFenceException] with [BeaconFenceErrorCode.beaconNotFound]
+  /// if a [Beacon] with the given ID is not registered.
   Future<void> removeBeaconById(String id) async => _api
       .removeBeaconById(id: id)
       .catchError(BeaconFenceExceptionMapper.catchError<void>);
