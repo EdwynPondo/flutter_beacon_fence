@@ -27,7 +27,7 @@ class FlutterBeaconBackgroundManager {
   ///
   /// Android only, has no effect on iOS (but is safe to call).
   ///
-  /// Throws [BeaconFenceExceptionMapper].
+  /// Throws [BeaconFenceException].
   Future<void> promoteToForeground() async => _api
       .promoteToForeground()
       .catchError(BeaconFenceExceptionMapper.catchError<void>);
@@ -37,7 +37,7 @@ class FlutterBeaconBackgroundManager {
   ///
   /// Android only, has no effect on iOS (but is safe to call).
   ///
-  /// Throws [BeaconFenceExceptionMapper].
+  /// Throws [BeaconFenceException].
   Future<void> demoteToBackground() async => _api
       .demoteToBackground()
       .catchError(BeaconFenceExceptionMapper.catchError<void>);
