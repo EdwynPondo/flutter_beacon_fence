@@ -4,6 +4,16 @@ A Flutter plugin that watches iBeacon regions natively on Android and iOS, and r
 
 ## Language
 
+### Scanning (Android)
+
+**App state**:
+Whether the host app's UI is visible to the user, either foreground or background. It decides which set of scan periods applies.
+_Avoid_: Mode, foreground mode, background mode
+
+**Scan strategy**:
+How Android keeps scanning for beacons running: a foreground service with a persistent notification, OS-scheduled jobs, or OS-delivered scan intents. It is independent of the app state.
+_Avoid_: Mode, scanning mode
+
 ### Errors
 
 **Call error**:

@@ -39,6 +39,7 @@ class BeaconNotifier(private val context: Context): MonitorNotifier, RangeNotifi
         Log.d(TAG, "didExitRegion: ${region.uniqueId}")
         // Match iOS: Stop ranging and broadcast Exit.
         beaconManager.stopRangingBeacons(region)
+        InsideRegionGuard.markOutside(context, region.uniqueId)
         triggerBeaconBroadcast(region, MonitorNotifier.OUTSIDE)
     }
 
@@ -53,8 +54,12 @@ class BeaconNotifier(private val context: Context): MonitorNotifier, RangeNotifi
             val beacon = beacons.first()
             Log.d(TAG, "didRangeBeaconsInRegion: ${region.uniqueId}, rssi=${beacon.rssi}")
             // Match iOS: Send Enter event with RSSI, then stop ranging immediately.
-            triggerBeaconBroadcast(region, MonitorNotifier.INSIDE, beacon.rssi)
             beaconManager.stopRangingBeacons(region)
+            if (InsideRegionGuard.shouldSuppressEnter(context, region.uniqueId)) {
+                Log.d(TAG, "Suppressed duplicate enter for ${region.uniqueId} after a scanner rebind.")
+                return
+            }
+            triggerBeaconBroadcast(region, MonitorNotifier.INSIDE, beacon.rssi)
         }
     }
 

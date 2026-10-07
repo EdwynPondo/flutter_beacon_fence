@@ -170,6 +170,28 @@ enum BeaconFenceErrorCode {
   /// The beacon deletion failed because the beacon was not found.
   /// This is safe to ignore.
   beaconNotFound,
+
+  /// The Android foreground service scan strategy was requested but the host
+  /// app manifest does not declare `android.permission.FOREGROUND_SERVICE`.
+  ///
+  /// Add it to your `AndroidManifest.xml` or choose another
+  /// [AndroidScanStrategy].
+  missingForegroundServicePermission,
+}
+
+/// How Android keeps beacon scanning running.
+enum AndroidScanStrategy {
+  /// A foreground service with a persistent notification. Fastest and most
+  /// reliable detection (~1s enter, ~30s exit) at the highest battery cost.
+  foregroundService,
+
+  /// OS scheduled jobs. Lowest battery cost; Android 8+ limits background
+  /// scans to roughly every 15 minutes.
+  jobScheduler,
+
+  /// OS delivered scan intents. Fast enter detection without a notification,
+  /// but slow exit detection. Falls back to [jobScheduler] below Android 8.
+  intent,
 }
 
 class IosBeaconSettingsWire {
@@ -305,7 +327,8 @@ class AndroidScannerSettingsWire {
     required this.foregroundBetweenScanPeriodMillis,
     required this.backgroundScanPeriodMillis,
     required this.backgroundBetweenScanPeriodMillis,
-    required this.useForegroundService,
+    required this.scanStrategy,
+    required this.regionExitPeriodMillis,
     this.notificationsSettings,
   });
 
@@ -317,7 +340,9 @@ class AndroidScannerSettingsWire {
 
   int backgroundBetweenScanPeriodMillis;
 
-  bool useForegroundService;
+  AndroidScanStrategy scanStrategy;
+
+  int regionExitPeriodMillis;
 
   AndroidNotificationsSettingsWire? notificationsSettings;
 
@@ -327,7 +352,8 @@ class AndroidScannerSettingsWire {
       foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
-      useForegroundService,
+      scanStrategy,
+      regionExitPeriodMillis,
       notificationsSettings,
     ];
   }
@@ -343,8 +369,9 @@ class AndroidScannerSettingsWire {
       foregroundBetweenScanPeriodMillis: result[1]! as int,
       backgroundScanPeriodMillis: result[2]! as int,
       backgroundBetweenScanPeriodMillis: result[3]! as int,
-      useForegroundService: result[4]! as bool,
-      notificationsSettings: result[5] as AndroidNotificationsSettingsWire?,
+      scanStrategy: result[4]! as AndroidScanStrategy,
+      regionExitPeriodMillis: result[5]! as int,
+      notificationsSettings: result[6] as AndroidNotificationsSettingsWire?,
     );
   }
 
@@ -374,7 +401,8 @@ class AndroidScannerSettingsWire {
           backgroundBetweenScanPeriodMillis,
           other.backgroundBetweenScanPeriodMillis,
         ) &&
-        _deepEquals(useForegroundService, other.useForegroundService) &&
+        _deepEquals(scanStrategy, other.scanStrategy) &&
+        _deepEquals(regionExitPeriodMillis, other.regionExitPeriodMillis) &&
         _deepEquals(notificationsSettings, other.notificationsSettings);
   }
 
@@ -598,26 +626,29 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is BeaconFenceErrorCode) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    } else if (value is IosBeaconSettingsWire) {
+    } else if (value is AndroidScanStrategy) {
       buffer.putUint8(131);
-      writeValue(buffer, value.encode());
-    } else if (value is AndroidBeaconSettingsWire) {
+      writeValue(buffer, value.index);
+    } else if (value is IosBeaconSettingsWire) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
-    } else if (value is AndroidNotificationsSettingsWire) {
+    } else if (value is AndroidBeaconSettingsWire) {
       buffer.putUint8(133);
       writeValue(buffer, value.encode());
-    } else if (value is AndroidScannerSettingsWire) {
+    } else if (value is AndroidNotificationsSettingsWire) {
       buffer.putUint8(134);
       writeValue(buffer, value.encode());
-    } else if (value is BeaconWire) {
+    } else if (value is AndroidScannerSettingsWire) {
       buffer.putUint8(135);
       writeValue(buffer, value.encode());
-    } else if (value is ActiveBeaconWire) {
+    } else if (value is BeaconWire) {
       buffer.putUint8(136);
       writeValue(buffer, value.encode());
-    } else if (value is BeaconCallbackParamsWire) {
+    } else if (value is ActiveBeaconWire) {
       buffer.putUint8(137);
+      writeValue(buffer, value.encode());
+    } else if (value is BeaconCallbackParamsWire) {
+      buffer.putUint8(138);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -634,18 +665,21 @@ class _PigeonCodec extends StandardMessageCodec {
         final value = readValue(buffer) as int?;
         return value == null ? null : BeaconFenceErrorCode.values[value];
       case 131:
-        return IosBeaconSettingsWire.decode(readValue(buffer)!);
+        final value = readValue(buffer) as int?;
+        return value == null ? null : AndroidScanStrategy.values[value];
       case 132:
-        return AndroidBeaconSettingsWire.decode(readValue(buffer)!);
+        return IosBeaconSettingsWire.decode(readValue(buffer)!);
       case 133:
-        return AndroidNotificationsSettingsWire.decode(readValue(buffer)!);
+        return AndroidBeaconSettingsWire.decode(readValue(buffer)!);
       case 134:
-        return AndroidScannerSettingsWire.decode(readValue(buffer)!);
+        return AndroidNotificationsSettingsWire.decode(readValue(buffer)!);
       case 135:
-        return BeaconWire.decode(readValue(buffer)!);
+        return AndroidScannerSettingsWire.decode(readValue(buffer)!);
       case 136:
-        return ActiveBeaconWire.decode(readValue(buffer)!);
+        return BeaconWire.decode(readValue(buffer)!);
       case 137:
+        return ActiveBeaconWire.decode(readValue(buffer)!);
+      case 138:
         return BeaconCallbackParamsWire.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);

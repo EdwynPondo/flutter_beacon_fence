@@ -230,6 +230,25 @@ enum BeaconFenceErrorCode: Int {
   /// The beacon deletion failed because the beacon was not found.
   /// This is safe to ignore.
   case beaconNotFound = 10
+  /// The Android foreground service scan strategy was requested but the host
+  /// app manifest does not declare `android.permission.FOREGROUND_SERVICE`.
+  ///
+  /// Add it to your `AndroidManifest.xml` or choose another
+  /// [AndroidScanStrategy].
+  case missingForegroundServicePermission = 11
+}
+
+/// How Android keeps beacon scanning running.
+enum AndroidScanStrategy: Int {
+  /// A foreground service with a persistent notification. Fastest and most
+  /// reliable detection (~1s enter, ~30s exit) at the highest battery cost.
+  case foregroundService = 0
+  /// OS scheduled jobs. Lowest battery cost; Android 8+ limits background
+  /// scans to roughly every 15 minutes.
+  case jobScheduler = 1
+  /// OS delivered scan intents. Fast enter detection without a notification,
+  /// but slow exit detection. Falls back to [jobScheduler] below Android 8.
+  case intent = 2
 }
 
 /// Generated class from Pigeon that represents data sent in messages.
@@ -341,7 +360,8 @@ struct AndroidScannerSettingsWire: Hashable {
   var foregroundBetweenScanPeriodMillis: Int64
   var backgroundScanPeriodMillis: Int64
   var backgroundBetweenScanPeriodMillis: Int64
-  var useForegroundService: Bool
+  var scanStrategy: AndroidScanStrategy
+  var regionExitPeriodMillis: Int64
   var notificationsSettings: AndroidNotificationsSettingsWire? = nil
 
 
@@ -351,15 +371,17 @@ struct AndroidScannerSettingsWire: Hashable {
     let foregroundBetweenScanPeriodMillis = pigeonVar_list[1] as! Int64
     let backgroundScanPeriodMillis = pigeonVar_list[2] as! Int64
     let backgroundBetweenScanPeriodMillis = pigeonVar_list[3] as! Int64
-    let useForegroundService = pigeonVar_list[4] as! Bool
-    let notificationsSettings: AndroidNotificationsSettingsWire? = nilOrValue(pigeonVar_list[5])
+    let scanStrategy = pigeonVar_list[4] as! AndroidScanStrategy
+    let regionExitPeriodMillis = pigeonVar_list[5] as! Int64
+    let notificationsSettings: AndroidNotificationsSettingsWire? = nilOrValue(pigeonVar_list[6])
 
     return AndroidScannerSettingsWire(
       foregroundScanPeriodMillis: foregroundScanPeriodMillis,
       foregroundBetweenScanPeriodMillis: foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis: backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis: backgroundBetweenScanPeriodMillis,
-      useForegroundService: useForegroundService,
+      scanStrategy: scanStrategy,
+      regionExitPeriodMillis: regionExitPeriodMillis,
       notificationsSettings: notificationsSettings
     )
   }
@@ -369,7 +391,8 @@ struct AndroidScannerSettingsWire: Hashable {
       foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
-      useForegroundService,
+      scanStrategy,
+      regionExitPeriodMillis,
       notificationsSettings,
     ]
   }
@@ -377,7 +400,7 @@ struct AndroidScannerSettingsWire: Hashable {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
-    return deepEqualsFlutterBindings(lhs.foregroundScanPeriodMillis, rhs.foregroundScanPeriodMillis) && deepEqualsFlutterBindings(lhs.foregroundBetweenScanPeriodMillis, rhs.foregroundBetweenScanPeriodMillis) && deepEqualsFlutterBindings(lhs.backgroundScanPeriodMillis, rhs.backgroundScanPeriodMillis) && deepEqualsFlutterBindings(lhs.backgroundBetweenScanPeriodMillis, rhs.backgroundBetweenScanPeriodMillis) && deepEqualsFlutterBindings(lhs.useForegroundService, rhs.useForegroundService) && deepEqualsFlutterBindings(lhs.notificationsSettings, rhs.notificationsSettings)
+    return deepEqualsFlutterBindings(lhs.foregroundScanPeriodMillis, rhs.foregroundScanPeriodMillis) && deepEqualsFlutterBindings(lhs.foregroundBetweenScanPeriodMillis, rhs.foregroundBetweenScanPeriodMillis) && deepEqualsFlutterBindings(lhs.backgroundScanPeriodMillis, rhs.backgroundScanPeriodMillis) && deepEqualsFlutterBindings(lhs.backgroundBetweenScanPeriodMillis, rhs.backgroundBetweenScanPeriodMillis) && deepEqualsFlutterBindings(lhs.scanStrategy, rhs.scanStrategy) && deepEqualsFlutterBindings(lhs.regionExitPeriodMillis, rhs.regionExitPeriodMillis) && deepEqualsFlutterBindings(lhs.notificationsSettings, rhs.notificationsSettings)
   }
 
   func hash(into hasher: inout Hasher) {
@@ -386,7 +409,8 @@ struct AndroidScannerSettingsWire: Hashable {
     deepHashFlutterBindings(value: foregroundBetweenScanPeriodMillis, hasher: &hasher)
     deepHashFlutterBindings(value: backgroundScanPeriodMillis, hasher: &hasher)
     deepHashFlutterBindings(value: backgroundBetweenScanPeriodMillis, hasher: &hasher)
-    deepHashFlutterBindings(value: useForegroundService, hasher: &hasher)
+    deepHashFlutterBindings(value: scanStrategy, hasher: &hasher)
+    deepHashFlutterBindings(value: regionExitPeriodMillis, hasher: &hasher)
     deepHashFlutterBindings(value: notificationsSettings, hasher: &hasher)
   }
 }
@@ -575,18 +599,24 @@ private class FlutterBindingsPigeonCodecReader: FlutterStandardReader {
       }
       return nil
     case 131:
-      return IosBeaconSettingsWire.fromList(self.readValue() as! [Any?])
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return AndroidScanStrategy(rawValue: enumResultAsInt)
+      }
+      return nil
     case 132:
-      return AndroidBeaconSettingsWire.fromList(self.readValue() as! [Any?])
+      return IosBeaconSettingsWire.fromList(self.readValue() as! [Any?])
     case 133:
-      return AndroidNotificationsSettingsWire.fromList(self.readValue() as! [Any?])
+      return AndroidBeaconSettingsWire.fromList(self.readValue() as! [Any?])
     case 134:
-      return AndroidScannerSettingsWire.fromList(self.readValue() as! [Any?])
+      return AndroidNotificationsSettingsWire.fromList(self.readValue() as! [Any?])
     case 135:
-      return BeaconWire.fromList(self.readValue() as! [Any?])
+      return AndroidScannerSettingsWire.fromList(self.readValue() as! [Any?])
     case 136:
-      return ActiveBeaconWire.fromList(self.readValue() as! [Any?])
+      return BeaconWire.fromList(self.readValue() as! [Any?])
     case 137:
+      return ActiveBeaconWire.fromList(self.readValue() as! [Any?])
+    case 138:
       return BeaconCallbackParamsWire.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -602,26 +632,29 @@ private class FlutterBindingsPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? BeaconFenceErrorCode {
       super.writeByte(130)
       super.writeValue(value.rawValue)
-    } else if let value = value as? IosBeaconSettingsWire {
+    } else if let value = value as? AndroidScanStrategy {
       super.writeByte(131)
-      super.writeValue(value.toList())
-    } else if let value = value as? AndroidBeaconSettingsWire {
+      super.writeValue(value.rawValue)
+    } else if let value = value as? IosBeaconSettingsWire {
       super.writeByte(132)
       super.writeValue(value.toList())
-    } else if let value = value as? AndroidNotificationsSettingsWire {
+    } else if let value = value as? AndroidBeaconSettingsWire {
       super.writeByte(133)
       super.writeValue(value.toList())
-    } else if let value = value as? AndroidScannerSettingsWire {
+    } else if let value = value as? AndroidNotificationsSettingsWire {
       super.writeByte(134)
       super.writeValue(value.toList())
-    } else if let value = value as? BeaconWire {
+    } else if let value = value as? AndroidScannerSettingsWire {
       super.writeByte(135)
       super.writeValue(value.toList())
-    } else if let value = value as? ActiveBeaconWire {
+    } else if let value = value as? BeaconWire {
       super.writeByte(136)
       super.writeValue(value.toList())
-    } else if let value = value as? BeaconCallbackParamsWire {
+    } else if let value = value as? ActiveBeaconWire {
       super.writeByte(137)
+      super.writeValue(value.toList())
+    } else if let value = value as? BeaconCallbackParamsWire {
+      super.writeByte(138)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)

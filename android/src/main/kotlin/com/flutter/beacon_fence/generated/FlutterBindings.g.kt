@@ -266,10 +266,43 @@ enum class BeaconFenceErrorCode(val raw: Int) {
    * The beacon deletion failed because the beacon was not found.
    * This is safe to ignore.
    */
-  BEACON_NOT_FOUND(10);
+  BEACON_NOT_FOUND(10),
+  /**
+   * The Android foreground service scan strategy was requested but the host
+   * app manifest does not declare `android.permission.FOREGROUND_SERVICE`.
+   *
+   * Add it to your `AndroidManifest.xml` or choose another
+   * [AndroidScanStrategy].
+   */
+  MISSING_FOREGROUND_SERVICE_PERMISSION(11);
 
   companion object {
     fun ofRaw(raw: Int): BeaconFenceErrorCode? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+/** How Android keeps beacon scanning running. */
+enum class AndroidScanStrategy(val raw: Int) {
+  /**
+   * A foreground service with a persistent notification. Fastest and most
+   * reliable detection (~1s enter, ~30s exit) at the highest battery cost.
+   */
+  FOREGROUND_SERVICE(0),
+  /**
+   * OS scheduled jobs. Lowest battery cost; Android 8+ limits background
+   * scans to roughly every 15 minutes.
+   */
+  JOB_SCHEDULER(1),
+  /**
+   * OS delivered scan intents. Fast enter detection without a notification,
+   * but slow exit detection. Falls back to [jobScheduler] below Android 8.
+   */
+  INTENT(2);
+
+  companion object {
+    fun ofRaw(raw: Int): AndroidScanStrategy? {
       return values().firstOrNull { it.raw == raw }
     }
   }
@@ -391,7 +424,8 @@ data class AndroidScannerSettingsWire (
   val foregroundBetweenScanPeriodMillis: Long,
   val backgroundScanPeriodMillis: Long,
   val backgroundBetweenScanPeriodMillis: Long,
-  val useForegroundService: Boolean,
+  val scanStrategy: AndroidScanStrategy,
+  val regionExitPeriodMillis: Long,
   val notificationsSettings: AndroidNotificationsSettingsWire? = null
 )
  {
@@ -401,9 +435,10 @@ data class AndroidScannerSettingsWire (
       val foregroundBetweenScanPeriodMillis = pigeonVar_list[1] as Long
       val backgroundScanPeriodMillis = pigeonVar_list[2] as Long
       val backgroundBetweenScanPeriodMillis = pigeonVar_list[3] as Long
-      val useForegroundService = pigeonVar_list[4] as Boolean
-      val notificationsSettings = pigeonVar_list[5] as AndroidNotificationsSettingsWire?
-      return AndroidScannerSettingsWire(foregroundScanPeriodMillis, foregroundBetweenScanPeriodMillis, backgroundScanPeriodMillis, backgroundBetweenScanPeriodMillis, useForegroundService, notificationsSettings)
+      val scanStrategy = pigeonVar_list[4] as AndroidScanStrategy
+      val regionExitPeriodMillis = pigeonVar_list[5] as Long
+      val notificationsSettings = pigeonVar_list[6] as AndroidNotificationsSettingsWire?
+      return AndroidScannerSettingsWire(foregroundScanPeriodMillis, foregroundBetweenScanPeriodMillis, backgroundScanPeriodMillis, backgroundBetweenScanPeriodMillis, scanStrategy, regionExitPeriodMillis, notificationsSettings)
     }
   }
   fun toList(): List<Any?> {
@@ -412,7 +447,8 @@ data class AndroidScannerSettingsWire (
       foregroundBetweenScanPeriodMillis,
       backgroundScanPeriodMillis,
       backgroundBetweenScanPeriodMillis,
-      useForegroundService,
+      scanStrategy,
+      regionExitPeriodMillis,
       notificationsSettings,
     )
   }
@@ -424,7 +460,7 @@ data class AndroidScannerSettingsWire (
       return true
     }
     val other = other as AndroidScannerSettingsWire
-    return FlutterBindingsPigeonUtils.deepEquals(this.foregroundScanPeriodMillis, other.foregroundScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.foregroundBetweenScanPeriodMillis, other.foregroundBetweenScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.backgroundScanPeriodMillis, other.backgroundScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.backgroundBetweenScanPeriodMillis, other.backgroundBetweenScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.useForegroundService, other.useForegroundService) && FlutterBindingsPigeonUtils.deepEquals(this.notificationsSettings, other.notificationsSettings)
+    return FlutterBindingsPigeonUtils.deepEquals(this.foregroundScanPeriodMillis, other.foregroundScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.foregroundBetweenScanPeriodMillis, other.foregroundBetweenScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.backgroundScanPeriodMillis, other.backgroundScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.backgroundBetweenScanPeriodMillis, other.backgroundBetweenScanPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.scanStrategy, other.scanStrategy) && FlutterBindingsPigeonUtils.deepEquals(this.regionExitPeriodMillis, other.regionExitPeriodMillis) && FlutterBindingsPigeonUtils.deepEquals(this.notificationsSettings, other.notificationsSettings)
   }
 
   override fun hashCode(): Int {
@@ -433,7 +469,8 @@ data class AndroidScannerSettingsWire (
     result = 31 * result + FlutterBindingsPigeonUtils.deepHash(this.foregroundBetweenScanPeriodMillis)
     result = 31 * result + FlutterBindingsPigeonUtils.deepHash(this.backgroundScanPeriodMillis)
     result = 31 * result + FlutterBindingsPigeonUtils.deepHash(this.backgroundBetweenScanPeriodMillis)
-    result = 31 * result + FlutterBindingsPigeonUtils.deepHash(this.useForegroundService)
+    result = 31 * result + FlutterBindingsPigeonUtils.deepHash(this.scanStrategy)
+    result = 31 * result + FlutterBindingsPigeonUtils.deepHash(this.regionExitPeriodMillis)
     result = 31 * result + FlutterBindingsPigeonUtils.deepHash(this.notificationsSettings)
     return result
   }
@@ -614,36 +651,41 @@ private open class FlutterBindingsPigeonCodec : StandardMessageCodec() {
         }
       }
       131.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          IosBeaconSettingsWire.fromList(it)
+        return (readValue(buffer) as Long?)?.let {
+          AndroidScanStrategy.ofRaw(it.toInt())
         }
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AndroidBeaconSettingsWire.fromList(it)
+          IosBeaconSettingsWire.fromList(it)
         }
       }
       133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AndroidNotificationsSettingsWire.fromList(it)
+          AndroidBeaconSettingsWire.fromList(it)
         }
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AndroidScannerSettingsWire.fromList(it)
+          AndroidNotificationsSettingsWire.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BeaconWire.fromList(it)
+          AndroidScannerSettingsWire.fromList(it)
         }
       }
       136.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ActiveBeaconWire.fromList(it)
+          BeaconWire.fromList(it)
         }
       }
       137.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ActiveBeaconWire.fromList(it)
+        }
+      }
+      138.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           BeaconCallbackParamsWire.fromList(it)
         }
@@ -661,32 +703,36 @@ private open class FlutterBindingsPigeonCodec : StandardMessageCodec() {
         stream.write(130)
         writeValue(stream, value.raw.toLong())
       }
-      is IosBeaconSettingsWire -> {
+      is AndroidScanStrategy -> {
         stream.write(131)
-        writeValue(stream, value.toList())
+        writeValue(stream, value.raw.toLong())
       }
-      is AndroidBeaconSettingsWire -> {
+      is IosBeaconSettingsWire -> {
         stream.write(132)
         writeValue(stream, value.toList())
       }
-      is AndroidNotificationsSettingsWire -> {
+      is AndroidBeaconSettingsWire -> {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is AndroidScannerSettingsWire -> {
+      is AndroidNotificationsSettingsWire -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is BeaconWire -> {
+      is AndroidScannerSettingsWire -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is ActiveBeaconWire -> {
+      is BeaconWire -> {
         stream.write(136)
         writeValue(stream, value.toList())
       }
-      is BeaconCallbackParamsWire -> {
+      is ActiveBeaconWire -> {
         stream.write(137)
+        writeValue(stream, value.toList())
+      }
+      is BeaconCallbackParamsWire -> {
+        stream.write(138)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)

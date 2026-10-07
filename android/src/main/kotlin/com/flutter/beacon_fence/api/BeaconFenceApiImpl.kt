@@ -12,7 +12,7 @@ import com.flutter.beacon_fence.generated.AndroidScannerSettingsWire
 import com.flutter.beacon_fence.generated.BeaconWire
 import com.flutter.beacon_fence.util.ActiveBeaconWires
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
-import com.flutter.beacon_fence.util.Notifications
+import com.flutter.beacon_fence.util.InsideRegionGuard
 import com.flutter.beacon_fence.util.toFlutterError
 import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.Region
@@ -20,7 +20,8 @@ import org.altbeacon.beacon.Identifier
 import androidx.core.content.edit
 import com.flutter.beacon_fence.generated.BeaconFenceErrorCode
 import com.flutter.beacon_fence.generated.FlutterBeaconFenceApi
-import com.flutter.beacon_fence.model.AndroidScannerSettingsStorage.AndroidNotificationSettingStore
+import com.flutter.beacon_fence.generated.FlutterError
+import com.flutter.beacon_fence.services.ScanSettingsApplier
 import com.flutter.beacon_fence.services.BeaconWatchdogService
 
 class BeaconFenceApiImpl(
@@ -44,12 +45,14 @@ class BeaconFenceApiImpl(
     fun restorePersistedBeacons() {
         Log.d(TAG, "restoreAfterReboot: Fetching persisted beacons...")
         val beacons = NativeBeaconPersistence.getAllBeacons(context)
-        Log.d(TAG, "restoreAfterReboot: Found ${beacons.size} beacons to re-create.")
-        for (beacon in beacons) {
+        val monitoredIds = beaconManager.monitoredRegions.map { it.uniqueId }.toSet()
+        val missing = beacons.filter { it.id !in monitoredIds }
+        Log.d(TAG, "restoreAfterReboot: Found ${beacons.size} beacons, re-creating ${missing.size} not monitored.")
+        for (beacon in missing) {
             createBeaconHelper(beacon, false, null)
         }
 
-        Log.d(TAG, "restoreAfterReboot: ${beacons.size} beacons processing complete.")
+        Log.d(TAG, "restoreAfterReboot: ${missing.size} beacons processing complete.")
     }
 
     override fun createBeacon(
@@ -84,12 +87,13 @@ class BeaconFenceApiImpl(
             beaconManager.stopRangingBeacons(region)
             
             NativeBeaconPersistence.removeBeacon(context, id)
+            InsideRegionGuard.markOutside(context, id)
             BeaconWatchdogService(context).updateWatchdogState()
             Log.d(TAG, "Removed Beacon ID=$id.")
             callback.invoke(Result.success(Unit))
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e(TAG, "removeBeaconById: Failed to remove Beacon ID=$id: $e")
-            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
+            callback.invoke(Result.failure(e.asFlutterError()))
         }
     }
 
@@ -102,12 +106,13 @@ class BeaconFenceApiImpl(
                 beaconManager.stopRangingBeacons(region)
             }
             NativeBeaconPersistence.removeAllBeacons(context)
+            InsideRegionGuard.clear(context)
             BeaconWatchdogService(context).updateWatchdogState()
             Log.d(TAG, "Removed all beacons.")
             callback.invoke(Result.success(Unit))
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e(TAG, "removeAllBeacons: Failed to remove beacons: $e")
-            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
+            callback.invoke(Result.failure(e.asFlutterError()))
         }
     }
 
@@ -116,45 +121,11 @@ class BeaconFenceApiImpl(
         callback: (Result<Unit>) -> Unit
     ) {
         try {
-            beaconManager.foregroundScanPeriod = settings.foregroundScanPeriodMillis
-            beaconManager.foregroundBetweenScanPeriod = settings.foregroundBetweenScanPeriodMillis
-            beaconManager.backgroundScanPeriod = settings.backgroundScanPeriodMillis
-            beaconManager.backgroundBetweenScanPeriod = settings.backgroundBetweenScanPeriodMillis
-            
-            try {
-                beaconManager.updateScanPeriods()
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed into updateScanPeriods: $e")
-                // usage of updateScanPeriods sometimes throws if not bound, 
-                // but setting the fields should be enough for next scan cycle.
-            }
-            
-            
-            if (settings.useForegroundService && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val notificationSettings = settings.notificationsSettings ?: AndroidNotificationSettingStore.DEFAULT_WIRE
-                val notification = Notifications.createForegroundServiceNotification(
-                    context,
-                    notificationSettings.title,
-                    notificationSettings.content
-                )
-                // Using a unique ID for AltBeacon's foreground service
-                beaconManager.enableForegroundServiceScanning(notification, Constants.NOTIFICATION_ID)
-            } else {
-                beaconManager.disableForegroundServiceScanning()
-            }
-            
-            Log.d(TAG, "Configured Android scan periods: " +
-                    "Foreground(Scan=${settings.foregroundScanPeriodMillis}ms, Between=${settings.foregroundBetweenScanPeriodMillis}ms), " +
-                    "Background(Scan=${settings.backgroundScanPeriodMillis}ms, Between=${settings.backgroundBetweenScanPeriodMillis}ms), " +
-                    "UseForegroundService=${settings.useForegroundService}")
-            
-            NativeBeaconPersistence.saveScannerSettings(context, settings)
-            BeaconWatchdogService(context).updateWatchdogState()
-            
+            ScanSettingsApplier(context, beaconManager).apply(settings)
             callback.invoke(Result.success(Unit))
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e(TAG, "configureAndroidMonitor: Failed to configure monitor: $e")
-            callback.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
+            callback.invoke(Result.failure(e.asFlutterError()))
         }
     }
 
@@ -179,6 +150,11 @@ class BeaconFenceApiImpl(
                 }
             }
 
+            if (cache) {
+                // Apply the default scan strategy when the app never configured one.
+                ScanSettingsApplier(context, beaconManager).applyDefaultIfUnset()
+            }
+
             val region = convertBeaconWire(beacon)
             beaconManager.startMonitoring(region)
             // Remove startRangingBeacons here to match iOS behavior:
@@ -191,9 +167,9 @@ class BeaconFenceApiImpl(
             
             Log.d(TAG, "createBeaconHelper: Successfully started monitoring Beacon ID=${beacon.id}.")
             callback?.invoke(Result.success(Unit))
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e(TAG, "createBeaconHelper: Failed to start monitoring Beacon ID=${beacon.id}: $e")
-            callback?.invoke(Result.failure(FlutterError(BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(e.toString()))))
+            callback?.invoke(Result.failure(e.asFlutterError()))
         }
     }
 
@@ -220,4 +196,7 @@ class BeaconFenceApiImpl(
             throw BeaconFenceErrorCode.INVALID_ARGUMENTS.toFlutterError("Invalid $name value: $value")
         }
     }
+
+    private fun Throwable.asFlutterError(): FlutterError =
+        this as? FlutterError ?: BeaconFenceErrorCode.PLUGIN_INTERNAL.toFlutterError(toString())
 }

@@ -52,7 +52,7 @@ class MyAppState extends State<MyApp> {
     await FlutterBeaconFenceManager.instance.removeAllBeacons();
     await FlutterBeaconFenceManager.instance.configureAndroidMonitor(
       const AndroidScannerSettings(
-        useForegroundService: true,
+        scanStrategy: AndroidScanStrategy.foregroundService,
         notificationSettings:
             AndroidNotificationSettings(title: 'title', content: 'content'),
       ),

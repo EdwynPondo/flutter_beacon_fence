@@ -6,6 +6,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.flutter.beacon_fence.Constants
+import com.flutter.beacon_fence.generated.AndroidScanStrategy
 import com.flutter.beacon_fence.util.NativeBeaconPersistence
 import java.util.concurrent.TimeUnit
 
@@ -16,10 +17,10 @@ class BeaconWatchdogService(private val context: Context) {
 
     fun updateWatchdogState() {
         val settings = NativeBeaconPersistence.getScannerSettings(context)
-        val useForegroundService = settings?.useForegroundService ?: false
+        val usesForegroundService = settings?.scanStrategy == AndroidScanStrategy.FOREGROUND_SERVICE
         val hasBeacons = NativeBeaconPersistence.getAllBeaconIds(context).isNotEmpty()
 
-        if (useForegroundService && hasBeacons) {
+        if (usesForegroundService && hasBeacons) {
             enqueueWatchdog()
         } else {
             cancelWatchdog()

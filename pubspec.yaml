@@ -1,6 +1,6 @@
 name: flutter_beacon_fence
 description: Battery efficient Flutter Beacon fencing that uses native iOS and Android APIs.
-version: 1.2.2
+version: 1.2.3
 homepage: https://github.com/EdwynPondo/flutter_beacon_fence
 repository: https://github.com/EdwynPondo/flutter_beacon_fence
 
